@@ -1,0 +1,513 @@
+openapi: 3.1.0
+info:
+  title: 정책자금 지원 업무 플랫폼 API
+  version: 0.1.0
+  description: >-
+    정책자금 지원 업무담당자를 위한 사내 플랫폼 API.
+servers:
+  - url: /api/v1
+    description: 기본 API 베이스 경로
+
+tags:
+  - name: search
+    description: 자연어로 규정·지침·절차를 질의하고 민원 응대 중 근거 조항을 즉시 조회
+  - name: notices
+    description: 정책 자금 공고 및 참고자료 문서의 버전 관리·개정본 등록
+  - name: rankings
+    description: 기간별 자주 묻는 질문을 카테고리화하여 업무 파악에 활용
+  - name: onboarding
+    description: 실무 검색 데이터 기반으로 신규입사자의 학습 우선순위를 안내
+
+paths:
+  # ─────────────────────── 자연어 검색 · 민원 응대 ───────────────────────
+  /search:
+    post:
+      tags: [search]
+      operationId: searchPolicy
+      summary: 자연어로 규정·지침·절차를 질의하고 근거 조항이 포함된 답변 수신
+      description: >-
+        규정·지침·절차·민원 내용을 자연어로 질의한다. 답변에는 항상 출처(문서명·조항)를
+        명시하며, 중복 절차는 요약 1건으로(duplicateSummary), 상충 절차는 임의 통합 없이
+        원문 병렬로(conflicts) 반환한다. 질의·답변은 검색 기록으로 저장된다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+            examples:
+              duplicate:
+                summary: 중복 절차 → 요약
+                value: { query: '서류 제출 기한이 어떻게 되나요?' }
+              conflict:
+                summary: 상충 절차 → 원문 병렬
+                value: { query: '대출 한도는 매출액 기준인가요 자기자본 기준인가요?' }
+      responses:
+        '200':
+          description: 검색 결과(근거 조항 포함)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /search/history:
+    get:
+      tags: [search]
+      operationId: listSearchHistory
+      summary: 이전 질의·답변 이력을 최신순으로 조회하여 민원 응대 중 빠른 재확인
+      description: 저장된 질의·답변을 최신순으로 반환한다. 민원 응대 중 빠른 재조회에 사용한다.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: 검색 기록 목록
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchHistoryItem'
+
+  /search/examples:
+    get:
+      tags: [search]
+      operationId: listSearchExamples
+      summary: 자주 쓰는 예시 질문 목록 조회 (최대 5개)
+      description: 사용자가 등록한 예시 질문(최대 5개)을 반환한다.
+      responses:
+        '200':
+          description: 예시 질문 목록(최대 5개)
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 5
+                items:
+                  $ref: '#/components/schemas/SearchExample'
+    post:
+      tags: [search]
+      operationId: addSearchExample
+      summary: 자주 쓰는 예시 질문 추가 (최대 5개까지 등록 가능)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text: { type: string }
+      responses:
+        '201':
+          description: 추가됨
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchExample'
+        '409':
+          description: 예시 질문이 이미 5개라 추가할 수 없음
+
+  /search/examples/{exampleId}:
+    delete:
+      tags: [search]
+      operationId: deleteSearchExample
+      summary: 등록된 예시 질문 삭제
+      parameters:
+        - name: exampleId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: 삭제됨
+
+  # ─────────────────────── 정책 자금 공고 · 문서 버전 관리 ───────────────────────
+  /notices/{category}:
+    get:
+      tags: [notices]
+      operationId: getNotice
+      summary: 공고 또는 참고자료 문서와 버전 목록 조회
+      description: >-
+        단일 진실 문서와 그 버전 목록을 반환한다. 버전은 날짜 내림차순(최신 우선)으로 정렬된다.
+      parameters:
+        - $ref: '#/components/parameters/NoticeCategory'
+      responses:
+        '200':
+          description: 공고 문서(버전 목록 포함)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoticeCategory'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /notices/{category}/versions/{version}/diff:
+    get:
+      tags: [notices]
+      operationId: getNoticeVersionDiff
+      summary: 지정 버전과 바로 전 버전의 블록 단위 변경 내역 조회
+      description: 지정 버전과 바로 전(더 오래된) 버전의 블록 단위 diff(추가=add/삭제=del/동일=same)를 반환한다.
+      parameters:
+        - $ref: '#/components/parameters/NoticeCategory'
+        - name: version
+          in: path
+          required: true
+          schema: { type: string }
+          example: v3
+      responses:
+        '200':
+          description: 블록 diff 목록
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DiffBlock'
+
+  /notices/{category}/revisions:
+    post:
+      tags: [notices]
+      operationId: registerNoticeRevision
+      summary: 검토·승인 완료된 개정본을 새 버전으로 확정 등록
+      description: >-
+        검토·승인 마법사의 최종 단계. 전처리·검토를 마친 갱신본 블록과 시행일을 받아
+        단일 진실 문서의 새 최신 버전으로 누적한다. 등록 확정은 사용자 승인 후에만 이루어진다.
+      parameters:
+        - $ref: '#/components/parameters/NoticeCategory'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoticeRevisionRequest'
+      responses:
+        '201':
+          description: 새 버전으로 등록됨
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoticeVersion'
+
+  /notices/{category}/revisions/preprocess:
+    post:
+      tags: [notices]
+      operationId: preprocessNoticePdf
+      summary: 개정 PDF를 업로드하여 텍스트·표·도표를 자동 추출하고 검토용 블록으로 변환
+      description: >-
+        PDF를 업로드하면 텍스트 추출·표/도표 인식·정규화를 자동 수행하여 검토용 블록을
+        반환한다. 자동 전처리 결과는 등록을 확정하지 않으며 사용자 검토·승인 단계로 넘어간다.
+      parameters:
+        - $ref: '#/components/parameters/NoticeCategory'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: 전처리된 검토용 블록
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  blocks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContentBlock'
+
+  # ─────────────────────── 자주 묻는 질문 분석 · 랭킹 ───────────────────────
+  /rankings:
+    get:
+      tags: [rankings]
+      operationId: getRankings
+      summary: 기간별로 자주 묻는 질문을 카테고리화하고 빈도순 랭킹으로 조회
+      description: 저장된 질의·답변에서 유사 질문을 카테고리화하고 빈도순 랭킹을 반환한다.
+      parameters:
+        - name: period
+          in: query
+          required: true
+          description: 집계 기간
+          schema:
+            type: string
+            examples: ['최근 7일', '최근 30일']
+      responses:
+        '200':
+          description: 랭킹 목록
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RankingItem'
+
+  # ─────────────────────── 신규입사자 학습 우선순위 안내 ───────────────────────
+  /onboarding:
+    get:
+      tags: [onboarding]
+      operationId: getOnboardingGuide
+      summary: 실무 검색·조회 빈도 기반으로 신규입사자가 먼저 학습해야 할 항목을 우선순위 순으로 안내
+      description: >-
+        실무자들의 실제 검색·조회 빈도(질문 랭킹 데이터)를 학습 우선순위로 환산해 반환한다.
+        별도의 추천 로직 없이 많이 보고·많이 검색한 순서가 곧 학습 순서가 된다.
+        각 항목에는 선정 근거(검색/조회 횟수)가 포함된다.
+      parameters:
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            default: '최근 30일'
+      responses:
+        '200':
+          description: 학습 우선순위 목록(근거 포함)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OnboardingItem'
+
+components:
+  parameters:
+    NoticeCategory:
+      name: category
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [regulation, reference]
+      description: 공고(regulation) / 참고자료(reference)
+    Page:
+      name: page
+      in: query
+      required: false
+      schema: { type: integer, minimum: 0, default: 0 }
+    Size:
+      name: size
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+
+  responses:
+    BadRequest:
+      description: 잘못된 요청
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: 리소스를 찾을 수 없음
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    DocType:
+      type: string
+      enum: ['규정', '지침', '절차']
+
+    PolicyDocument:
+      type: object
+      required: [id, title, type, updatedAt, isSingleSource]
+      properties:
+        id: { type: string, example: D-001 }
+        title: { type: string }
+        type: { $ref: '#/components/schemas/DocType' }
+        updatedAt: { type: string, format: date }
+        isSingleSource:
+          type: boolean
+          description: 개정 시 이 문서 하나만 갱신하는 단일 진실 문서 여부
+
+    Article:
+      type: object
+      description: 답변·랭킹의 근거가 되는 조항 단위
+      required: [docId, docTitle, docType, articleNo, text]
+      properties:
+        docId: { type: string }
+        docTitle: { type: string }
+        docType: { $ref: '#/components/schemas/DocType' }
+        articleNo: { type: string, example: 제5조 2항 }
+        text: { type: string }
+
+    SearchRequest:
+      type: object
+      required: [query]
+      properties:
+        query: { type: string }
+
+    SearchResult:
+      type: object
+      description: >-
+        자연어 질의에 대한 검색 응답. 중복 절차는 duplicateSummary(요약 1건+출처),
+        상충 절차는 conflicts(원문 병렬+출처)로 분리해 표현한다. 임의 통합 금지.
+      required: [query, answer, evidence]
+      properties:
+        query: { type: string }
+        answer: { type: string }
+        evidence:
+          type: array
+          description: 답변의 직접 근거 조항
+          items: { $ref: '#/components/schemas/Article' }
+        duplicateSummary:
+          type: object
+          description: 중복 절차를 하나로 요약 + 출처
+          required: [summary, sources]
+          properties:
+            summary: { type: string }
+            sources:
+              type: array
+              items: { $ref: '#/components/schemas/Article' }
+        conflicts:
+          type: array
+          description: 상충 절차 — 원문 그대로 병렬 표시 + 출처
+          items: { $ref: '#/components/schemas/Article' }
+
+    SearchHistoryItem:
+      type: object
+      required: [id, query, createdAt]
+      properties:
+        id: { type: string }
+        query: { type: string }
+        createdAt: { type: string, format: date-time }
+        result: { $ref: '#/components/schemas/SearchResult' }
+
+    SearchExample:
+      type: object
+      required: [id, text]
+      properties:
+        id: { type: string }
+        text: { type: string }
+
+    ContentBlock:
+      oneOf:
+        - $ref: '#/components/schemas/TextBlock'
+        - $ref: '#/components/schemas/ImageBlock'
+      discriminator:
+        propertyName: type
+        mapping:
+          text: '#/components/schemas/TextBlock'
+          image: '#/components/schemas/ImageBlock'
+
+    TextBlock:
+      type: object
+      required: [type, text]
+      properties:
+        type: { type: string, const: text }
+        text: { type: string }
+
+    ImageBlock:
+      type: object
+      required: [type, src]
+      properties:
+        type: { type: string, const: image }
+        src: { type: string }
+        name: { type: string }
+
+    NoticeVersion:
+      type: object
+      required: [version, date, blocks]
+      properties:
+        version: { type: string, example: v3 }
+        date: { type: string, format: date }
+        blocks:
+          type: array
+          items: { $ref: '#/components/schemas/ContentBlock' }
+
+    NoticeCategory:
+      type: object
+      required: [key, label, docTitle, versions]
+      properties:
+        key:
+          type: string
+          enum: [regulation, reference]
+        label: { type: string, example: 공고 }
+        docTitle: { type: string }
+        versions:
+          type: array
+          description: 날짜 내림차순(최신 먼저)
+          items: { $ref: '#/components/schemas/NoticeVersion' }
+
+    NoticeRevisionRequest:
+      type: object
+      description: 검토·승인 완료된 갱신본
+      required: [effectiveDate, blocks]
+      properties:
+        effectiveDate:
+          type: string
+          format: date
+          description: 시행일
+        blocks:
+          type: array
+          items: { $ref: '#/components/schemas/ContentBlock' }
+
+    DiffBlock:
+      type: object
+      required: [type, block]
+      properties:
+        type:
+          type: string
+          enum: [same, add, del]
+          description: 동일/추가(초록)/삭제(빨강)
+        block: { $ref: '#/components/schemas/ContentBlock' }
+
+    Trend:
+      type: string
+      enum: [up, down, same]
+
+    RankingItem:
+      type: object
+      required: [rank, category, questionExample, searchCount, viewCount, trend, relatedArticles]
+      properties:
+        rank: { type: integer, minimum: 1 }
+        category: { type: string }
+        questionExample: { type: string }
+        searchCount:
+          type: integer
+          description: 검색 횟수
+        viewCount:
+          type: integer
+          description: 조회 횟수
+        trend: { $ref: '#/components/schemas/Trend' }
+        relatedArticles:
+          type: array
+          description: 이 카테고리의 핵심 근거 문서/조항
+          items: { $ref: '#/components/schemas/Article' }
+
+    OnboardingItem:
+      type: object
+      description: >-
+        실무 검색·조회 빈도를 학습 우선순위로 환산한 항목.
+        근거(검색/조회 횟수)를 함께 노출하여 왜 먼저 봐야 하는지 설명한다.
+      required: [order, category, reason, searchCount, viewCount, relatedArticles]
+      properties:
+        order:
+          type: integer
+          minimum: 1
+          description: 학습 순서(검색·조회 빈도 높은 순)
+        category: { type: string }
+        reason:
+          type: string
+          description: 선정 근거 설명(왜 먼저 봐야 하는지)
+        searchCount: { type: integer }
+        viewCount: { type: integer }
+        relatedArticles:
+          type: array
+          items: { $ref: '#/components/schemas/Article' }
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
