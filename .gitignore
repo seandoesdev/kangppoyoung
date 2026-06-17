@@ -27,3 +27,11 @@ yarn-error.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# Python (pdf→rag 파이프라인)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+# 파이프라인 산출물(원본 PDF 변환 결과)
+/out/

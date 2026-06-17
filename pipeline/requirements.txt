@@ -1,0 +1,8 @@
+# PDF → RAG Chunk 파이프라인 의존성 (Python 3.10+)
+pdfplumber>=0.11
+pydantic>=2.5
+lxml>=5.0
+# 선택: 이미지 의미화(Vision)·OCR 도입 시
+#   openai>=1.0        # Vision provider (OPENAI_API_KEY 필요)
+#   pytesseract>=0.3   # OCR (+ 시스템 tesseract-ocr, tesseract-ocr-kor 바이너리 필요)
+#   Pillow>=10.0
