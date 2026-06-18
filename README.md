@@ -17,7 +17,7 @@
 | [`nginx/`](nginx/) | 엣지 리버스 프록시 설정([`nginx/nginx.conf`](nginx/nginx.conf)) |
 | [`docker-compose.yml`](docker-compose.yml) | 4-서비스 전체 스택(mysql·backend·frontend·nginx) |
 
-> `out/`에는 `source/` 파일명과 매칭되는 정본 산출 폴더 외에, 중복된 `1. ...변경공고(2026-287호)`/`(제2026-287호)` 폴더와 비어 있는 `doc1`/`doc2`/`doc3` placeholder 디렉터리가 남아 있다. 이들은 정리(cleanup) 대상이며 정본 폴더만 유효하다.
+> `out/`에는 `source/`의 PDF 3종과 1:1로 매칭되는 정본 산출 폴더만 둔다. 같은 `chunk_id`(결정론적)는 `ChunkIngestService`가 PK upsert로 합치므로 동일 문서를 중복 폴더로 두면 부팅 시 재적재 작업만 늘 뿐 데이터는 중복되지 않는다 — 그래도 폴더는 source와 1:1로 유지하는 것을 권장한다.
 
 ## 빠른 시작 (Docker)
 
@@ -43,7 +43,7 @@ curl http://localhost:${NGINX_PORT:-80}/actuator/health
 - 앱 진입: `http://localhost:${NGINX_PORT:-80}/` (프론트엔드 SPA)
 - API: `http://localhost:${NGINX_PORT:-80}/api/v1/...`
 - 백엔드는 부팅 시 [`out/`](out/)의 `**/chunks.jsonl`을 비어있는 `chunk_embedding` 테이블에 자동 적재한다(`./out:/app/out:ro` 마운트). 검색 데이터를 채우려면 먼저 파이프라인으로 `out/`을 생성해 두면 된다.
-- OpenAI 키는 선택이다. `.env.example`의 `OPENAI_API_KEY`는 비어 있고, 그 상태로도 검색은 오프라인 경로로 동작한다.
+- OpenAI 키는 검색·동작상 선택이지만, **`.env`의 `OPENAI_API_KEY`는 비워 두면 안 된다.** 빈 값은 `application.yml`의 `${OPENAI_API_KEY:sk-noop}` 기본값을 덮어써 Spring AI 챗 모델 빈이 부팅에 실패하므로(검색은 오프라인이지만 Vision/분류 빈이 무조건 챗 모델을 끌어옴), 키가 없으면 `.env.example`처럼 **`OPENAI_API_KEY=sk-noop`** 센티넬을 둔다. 실제 OpenAI 기능을 쓸 때만 `sk-...` 키로 교체.
 
 ## 사용 방법
 
@@ -122,7 +122,7 @@ cd backend && ./gradlew test
 
 - MySQL 8.0이 필요하다. 베이스 `application.yml`에는 datasource가 없으므로 반드시 `SPRING_PROFILES_ACTIVE=local`(localhost:3306) 또는 `docker`(host `mysql`)를 활성화해야 한다. `docker` 프로파일은 `DB_USERNAME`/`DB_PASSWORD`에 기본값이 없어 env로 주입해야 한다.
 - 스키마는 Flyway(`V1`~`V3`)가 소유한다(`ddl-auto=validate`).
-- OpenAI 키는 기본 동작에 불필요하다(`search.embedding.provider=hash`, `search.synth.provider=offline`, `search.retrieval=vector`). 키가 필요한 경우는 OpenAI 임베딩/합성, PDF Vision OCR([`OpenAiPageVisionExtractor`](backend/src/main/java/com/policyfund/notices/preprocess/OpenAiPageVisionExtractor.java)), 질문 분류기뿐이며 — Vision OCR과 질문 분류는 오프라인 폴백 빈이 없어 이미지 전용 PDF나 비캐시 랭킹 계산 시 키 없이는 실패한다.
+- OpenAI 키는 기본 동작(검색)에 불필요하다(`search.embedding.provider=hash`, `search.synth.provider=offline`, `search.retrieval=vector`). 다만 `OpenAiPageVisionExtractor`([소스](backend/src/main/java/com/policyfund/notices/preprocess/OpenAiPageVisionExtractor.java))가 무조건 등록되는 빈이라 **부팅 시 Spring AI 챗 모델이 필요**하다 — 따라서 `spring.ai.openai.api-key`는 최소한 센티넬 `sk-noop`이어야 하며(미설정 시 `application.yml` 기본값이 sk-noop), **빈 문자열이면 컨텍스트가 뜨지 않는다.** 실제 키가 필요한 경우는 OpenAI 임베딩/합성, PDF Vision OCR, 질문 분류기이며 — Vision OCR·질문 분류는 오프라인 폴백 빈이 없어 이미지 전용 PDF나 비캐시 랭킹 계산 시 sk-noop만으로는 그 호출이 실패한다.
 
 **주요 엔드포인트** (베이스 `/api/v1`)
 
@@ -154,7 +154,7 @@ npm run preview    # 프로덕션 빌드 로컬 미리보기
 
 | 변수 | 적용 대상 | 설명 | 기본/오프라인값 |
 |------|-----------|------|------------------|
-| `OPENAI_API_KEY` | 백엔드·파이프라인 | Spring AI(gpt-4o·임베딩), Vision OCR, 질문 분류, 파이프라인 Vision에 사용. 미설정/`sk-noop`이면 컨텍스트는 기동되고 실제 OpenAI 호출만 실패 | (미설정 → 오프라인 폴백) |
+| `OPENAI_API_KEY` | 백엔드·파이프라인 | Spring AI(gpt-4o·임베딩), Vision OCR, 질문 분류, 파이프라인 Vision에 사용. `sk-noop`(또는 미설정)이면 컨텍스트는 기동되고 실제 OpenAI 호출만 실패. **빈 문자열은 부팅 실패**(기본값 sk-noop을 덮어씀) | `sk-noop` |
 | `DB_USERNAME` / `DB_PASSWORD` | 백엔드·MySQL | MySQL 자격증명. `local` 프로파일 코드 기본 `policyfund`/`policyfund`, `docker` 프로파일은 기본 없음 | `policyfund` (local) |
 | `DB_ROOT_PASSWORD` | MySQL | MySQL root 비밀번호(헬스체크·초기화) | `change-me-root` (.env.example) |
 | `SPRING_PROFILES_ACTIVE` | 백엔드 | datasource 바인딩 선택(`local`/`docker`). 미설정 시 datasource 없음 | (없음) |
