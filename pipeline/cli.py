@@ -21,6 +21,20 @@ from .config import Config
 from .serialize import to_chunks_xml, to_vector_records, write_jsonl, write_manifest, write_xml
 
 
+def _resolve_generated_at(cli_value: str | None) -> str:
+    """document/@generated_at 결정. 우선순위: --generated-at > SOURCE_DATE_EPOCH env > 현재 UTC.
+
+    고정값을 주면 chunk 내용·ID와 무관한 유일한 비결정 요소(벽시계)를 제거해 XML이 byte-동일해진다
+    (§13.2: generated_at는 XML 속성 전용, chunk_id 해시 미포함). 골든 회귀·재현 빌드에서 사용한다.
+    """
+    if cli_value:
+        return cli_value
+    epoch = os.environ.get("SOURCE_DATE_EPOCH")
+    if epoch:
+        return datetime.datetime.fromtimestamp(int(epoch), datetime.timezone.utc).isoformat()
+    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
 def _emit_manifest(manifest: dict, outdir: str | None):
     line = json.dumps({"@@MANIFEST@@": True, **manifest}, ensure_ascii=False)
     print(line)
@@ -43,6 +57,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-input-mb", type=int, default=100)
     ap.add_argument("--max-pages", type=int, default=300)
     ap.add_argument("--no-verify", action="store_true", help="검증 단계 생략")
+    ap.add_argument("--generated-at", default=None,
+                    help="document/@generated_at 고정값(ISO-8601). 미지정 시 SOURCE_DATE_EPOCH "
+                         "env, 그것도 없으면 현재 UTC. 골든 byte-동일 회귀용(§13.2).")
     args = ap.parse_args(argv)
 
     cfg = Config(
@@ -81,7 +98,7 @@ def main(argv: list[str] | None = None) -> int:
             return 5
 
         doc_id = args.doc_id or doc_info["document_id"]
-        generated_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        generated_at = _resolve_generated_at(args.generated_at)
         doc_attrs = {"id": doc_id, "file_name": file_name,
                      "source_sha256": doc_info["source_sha256"],
                      "pipeline_version": PIPELINE_VERSION, "generated_at": generated_at}

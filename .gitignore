@@ -33,4 +33,9 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
-# 파이프라인 산출물(원본 PDF 변환 결과)
+# 파이프라인 부분 산출물(중간 실패 격리). 정식 산출물 out/ 는 추적한다.
+*.partial
+# 테스트/커버리지 캐시
+.pytest_cache/
+.coverage
+htmlcov/

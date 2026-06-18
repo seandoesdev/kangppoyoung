@@ -6,3 +6,6 @@ lxml>=5.0
 #   openai>=1.0        # Vision provider (OPENAI_API_KEY 필요)
 #   pytesseract>=0.3   # OCR (+ 시스템 tesseract-ocr, tesseract-ocr-kor 바이너리 필요)
 #   Pillow>=10.0
+# 개발/테스트 전용(운영 미포함): pytest로 tests/ 실행
+#   pytest>=8.0
+#   pytest-cov>=5.0    # 커버리지 측정(목표 80%+)

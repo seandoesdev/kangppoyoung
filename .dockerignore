@@ -1,0 +1,31 @@
+# backend 빌드 컨텍스트 = 저장소 루트. 이미지에 불필요한 대용량/무관 경로를 제외해
+# 컨텍스트 전송을 줄인다. backend/ 와 pipeline/ 는 제외하지 않는다(이미지에 필요).
+.git/
+.gitignore
+.venv/
+venv/
+**/__pycache__/
+**/*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 다른 서비스/문서/산출물(backend 이미지에 불필요)
+frontend/
+docs/
+tests/
+out/
+source/
+nginx/
+
+# 빌드/IDE/OS 잔여물
+**/.gradle/
+**/build/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# 비밀·환경
+.env
+.env.*

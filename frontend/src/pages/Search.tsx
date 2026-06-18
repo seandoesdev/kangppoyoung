@@ -1,5 +1,8 @@
 import { useState } from 'react'
-import { SEARCH_SCENARIOS, type SearchResult } from '../data/mock'
+import { SEARCH_SCENARIOS } from '../data/mock'
+import type { SearchResult } from '../api/types'
+import { searchPolicy } from '../api/search'
+import { ApiError } from '../api/client'
 import {
   ArticleCard,
   Card,
@@ -10,14 +13,6 @@ import {
 
 const MAX_EXAMPLES = 5
 
-function findResult(q: string): SearchResult {
-  return (
-    SEARCH_SCENARIOS.find(
-      (s) => q && (s.query.includes(q.slice(0, 2)) || q.includes(s.query.slice(0, 2))),
-    ) ?? SEARCH_SCENARIOS[0]
-  )
-}
-
 interface HistoryEntry {
   query: string
   result: SearchResult
@@ -27,6 +22,8 @@ export default function Search() {
   const [query, setQuery] = useState('')
   const [result, setResult] = useState<SearchResult | null>(null)
   const [history, setHistory] = useState<HistoryEntry[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // 예시 질문 (사용자가 최대 5개까지 추가/삭제)
   const [examples, setExamples] = useState<string[]>(
@@ -34,16 +31,26 @@ export default function Search() {
   )
   const [newExample, setNewExample] = useState('')
 
-  function runSearch(q: string) {
+  // 백엔드 /api/v1/search 를 호출해 실제 검색 결과를 받아온다.
+  async function runSearch(q: string) {
     const trimmed = q.trim()
-    if (!trimmed) return
-    const r = findResult(trimmed)
+    if (!trimmed || loading) return
     setQuery(trimmed)
-    setResult(r)
-    setHistory((prev) => [
-      { query: trimmed, result: r },
-      ...prev.filter((h) => h.query !== trimmed),
-    ])
+    setLoading(true)
+    setError(null)
+    try {
+      const r = await searchPolicy(trimmed)
+      setResult(r)
+      setHistory((prev) => [
+        { query: trimmed, result: r },
+        ...prev.filter((h) => h.query !== trimmed),
+      ])
+    } catch (e) {
+      setResult(null)
+      setError(e instanceof ApiError ? e.message : '검색 중 오류가 발생했습니다.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   function addExample() {
@@ -76,9 +83,10 @@ export default function Search() {
           />
           <button
             onClick={() => runSearch(query)}
-            className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-700"
+            disabled={loading}
+            className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-50"
           >
-            검색
+            {loading ? '검색 중…' : '검색'}
           </button>
         </div>
 
@@ -130,6 +138,12 @@ export default function Search() {
           </div>
         </div>
       </Card>
+
+      {error && (
+        <Card className="mb-6 border-l-4 border-l-rose-400">
+          <p className="text-sm text-rose-600">{error}</p>
+        </Card>
+      )}
 
       {result && <ResultView result={result} />}
 

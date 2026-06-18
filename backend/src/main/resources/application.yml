@@ -22,6 +22,16 @@ spring:
         options:
           model: gpt-4o
 
+# 검색 파이프라인: 벡터(코사인) 검색 + 오프라인 해싱 임베딩 + 부팅 시 out/**/chunks.jsonl 자동 적재.
+search:
+  retrieval: vector
+  embedding:
+    provider: hash
+  synth:
+    provider: offline   # 키 없이 동작(검색 후보를 근거로 제시). OpenAI 합성은 openai 로 전환.
+  ingest:
+    on-startup: true
+
 server:
   port: 8080
   error:

@@ -9,19 +9,51 @@ from __future__ import annotations
 from .config import Config
 from .extract import ImageRegion, PageData
 from .ids import make_figure_id, norm_float
+from .providers import VisionProvider, get_vision_provider
 from .raw import RawChunk
 
 _PLACEHOLDER = "[비텍스트 시각자료 — offline 모드에서 자동 의미화를 수행하지 못함(검토 필요)]"
 
 
 def build_figure(
-    im: ImageRegion, page_no: int, heading_path: list[str], document_id: str, cfg: Config
+    im: ImageRegion,
+    page_no: int,
+    heading_path: list[str],
+    document_id: str,
+    cfg: Config,
+    provider: VisionProvider | None = None,
 ) -> RawChunk | None:
-    """이미지 1개 → infographic 청크(offline 폴백). 장식 추정(작은 면적)은 None 반환."""
+    """이미지 1개 → infographic 청크. 장식 추정(작은 면적)은 None 반환.
+
+    provider가 의미 설명(dict)을 주면 그 summary로 고신뢰 infographic을 만들고, None을 주면
+    (offline 기본) 기존과 동일한 needs_review(offline_fallback) 청크를 만든다(현행 출력 보존)."""
     if im.width * im.height < cfg.min_image_area_pt:
         return None
     nb = "|".join(norm_float(v) for v in (im.x0, im.y0, im.x1, im.y1))
     figure_id = make_figure_id(document_id, f"p{page_no}", nb)
+
+    if provider is None:
+        provider = get_vision_provider(cfg)
+    desc = provider.describe(b"", "infographic")  # offline=None; 키 환경에서만 의미 산출
+
+    if desc and desc.get("summary"):
+        return RawChunk(
+            content_type="infographic",
+            page_no=page_no,
+            extract_method="layout_analysis",
+            base_conf=cfg.base_conf_layout,
+            heading_path=list(heading_path),
+            chapter=heading_path[0] if heading_path else None,
+            section=(heading_path[1] if len(heading_path) > 1 else None),
+            bbox=(im.x0, im.y0, im.x1, im.y1),
+            bbox_page=page_no,
+            figure_id=figure_id,
+            info_summary=desc["summary"],
+            info_ocr=desc.get("ocr_text"),
+            order_y=im.y0,
+            order_x=im.x0,
+        )
+
     return RawChunk(
         content_type="infographic",
         page_no=page_no,
