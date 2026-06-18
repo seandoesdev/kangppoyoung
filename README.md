@@ -1,6 +1,6 @@
 # 정책자금 지원 업무 플랫폼
 
-정책공고(공고/규정) PDF를 구조화·RAG 최적화 청크로 변환하고, 그 데이터 위에서 자연어 검색·답변 합성, 공고 버전관리·diff, 질문 랭킹, 온보딩 가이드를 제공하는 내부 업무 플랫폼이다. **PDF 정책공고 → 구조화/RAG 청크(`chunks.xml` 정본 + `chunks.jsonl` 벡터 적재용) → 벡터/풀텍스트 검색 + 답변 합성**의 단방향 파이프라인을 중심으로, 공고 버전관리·랭킹·온보딩 기능이 함께 동작한다. 기본값은 **오프라인(OpenAI 키 불필요)** 으로, 결정론적 해시 임베딩 + 오프라인 답변 합성만으로 검색이 end-to-end 동작한다.
+정책공고(공고/규정) PDF를 구조화·RAG 최적화 청크로 변환하고, 그 데이터 위에서 자연어 검색·답변 합성, 공고 버전관리·diff, 질문 랭킹, 온보딩 가이드를 제공하는 내부 업무 플랫폼이다. **PDF 정책공고 → 구조화/RAG 청크(`chunks.xml` 정본 + `chunks.jsonl` 벡터 적재용) → 벡터/풀텍스트 검색 + 답변 합성**의 단방향 파이프라인을 중심으로, 공고 버전관리·랭킹·온보딩 기능이 함께 동작한다. 검색 기본값은 **OpenAI 모드**로, 의미 임베딩(1536차원) + LLM(gpt-4o) 답변 합성으로 동작하며 실제 `OPENAI_API_KEY`가 필요하다(키 없이 오프라인 해시 임베딩 + 근거 나열 모드로 전환도 가능). PDF→RAG 파이프라인 자체는 키 없이 오프라인으로 동작한다.
 
 구성은 모노레포로, 4개 파트로 나뉜다: Python PDF→RAG 파이프라인([`pipeline/`](pipeline/)), Spring Boot 백엔드([`backend/`](backend/)), React+Vite 프론트엔드([`frontend/`](frontend/)), 그리고 Docker/nginx 배포 인프라.
 
@@ -24,8 +24,8 @@
 전체 스택은 `mysql`, `backend`(파이프라인 번들), `frontend`, `nginx` 4개 서비스로 구성된다. **호스트로 노출되는 포트는 엣지 nginx 뿐**이며, backend(8080)·frontend(80)는 nginx를 통해서만 접근한다.
 
 ```bash
-# 1) .env 준비 (DB 자격증명, 선택적 OpenAI 키, nginx 포트)
-cp .env.example .env   # 이후 DB_* / OPENAI_API_KEY / NGINX_PORT 편집
+# 1) .env 준비 (DB 자격증명, OpenAI 키[기본 검색에 필수], nginx 포트)
+cp .env.example .env   # 이후 DB_* / OPENAI_API_KEY(실제 sk- 키) / NGINX_PORT 편집
 
 # 2) 전체 스택 빌드·기동
 docker compose up --build
@@ -43,7 +43,7 @@ curl http://localhost:${NGINX_PORT:-80}/actuator/health
 - 앱 진입: `http://localhost:${NGINX_PORT:-80}/` (프론트엔드 SPA)
 - API: `http://localhost:${NGINX_PORT:-80}/api/v1/...`
 - 백엔드는 부팅 시 [`out/`](out/)의 `**/chunks.jsonl`을 비어있는 `chunk_embedding` 테이블에 자동 적재한다(`./out:/app/out:ro` 마운트). 검색 데이터를 채우려면 먼저 파이프라인으로 `out/`을 생성해 두면 된다.
-- OpenAI 키는 검색·동작상 선택이지만, **`.env`의 `OPENAI_API_KEY`는 비워 두면 안 된다.** 빈 값은 `application.yml`의 `${OPENAI_API_KEY:sk-noop}` 기본값을 덮어써 Spring AI 챗 모델 빈이 부팅에 실패하므로(검색은 오프라인이지만 Vision/분류 빈이 무조건 챗 모델을 끌어옴), 키가 없으면 `.env.example`처럼 **`OPENAI_API_KEY=sk-noop`** 센티넬을 둔다. 실제 OpenAI 기능을 쓸 때만 `sk-...` 키로 교체.
+- **검색 기본값이 OpenAI 모드(임베딩 + gpt-4o 답변 합성)이므로 실제 `OPENAI_API_KEY`가 필요하다.** 질의 임베딩·답변 합성·부팅 시 청크 임베딩 적재가 모두 OpenAI를 호출한다. `sk-noop`이면 컨텍스트는 뜨지만 검색·부팅 적재가 실패하고, **빈 문자열이면 부팅 자체가 실패**한다(Vision/분류 빈이 무조건 챗 모델을 끌어옴). 키 없이 돌리려면 `.env.example` 주석대로 `SEARCH_EMBEDDING_PROVIDER=hash`·`SEARCH_SYNTH_PROVIDER=offline`로 전환하고 `OPENAI_API_KEY=sk-noop`을 둔다.
 
 ## 사용 방법
 
@@ -122,7 +122,7 @@ cd backend && ./gradlew test
 
 - MySQL 8.0이 필요하다. 베이스 `application.yml`에는 datasource가 없으므로 반드시 `SPRING_PROFILES_ACTIVE=local`(localhost:3306) 또는 `docker`(host `mysql`)를 활성화해야 한다. `docker` 프로파일은 `DB_USERNAME`/`DB_PASSWORD`에 기본값이 없어 env로 주입해야 한다.
 - 스키마는 Flyway(`V1`~`V3`)가 소유한다(`ddl-auto=validate`).
-- OpenAI 키는 기본 동작(검색)에 불필요하다(`search.embedding.provider=hash`, `search.synth.provider=offline`, `search.retrieval=vector`). 다만 `OpenAiPageVisionExtractor`([소스](backend/src/main/java/com/policyfund/notices/preprocess/OpenAiPageVisionExtractor.java))가 무조건 등록되는 빈이라 **부팅 시 Spring AI 챗 모델이 필요**하다 — 따라서 `spring.ai.openai.api-key`는 최소한 센티넬 `sk-noop`이어야 하며(미설정 시 `application.yml` 기본값이 sk-noop), **빈 문자열이면 컨텍스트가 뜨지 않는다.** 실제 키가 필요한 경우는 OpenAI 임베딩/합성, PDF Vision OCR, 질문 분류기이며 — Vision OCR·질문 분류는 오프라인 폴백 빈이 없어 이미지 전용 PDF나 비캐시 랭킹 계산 시 sk-noop만으로는 그 호출이 실패한다.
+- **검색 기본값이 OpenAI(`search.embedding.provider=openai`, `search.synth.provider=openai`, `search.retrieval=vector`)이므로 실제 `OPENAI_API_KEY`가 필요하다** — 질의 임베딩·gpt-4o 답변 합성·부팅 시 청크 임베딩 적재가 모두 OpenAI를 호출한다. 추가로 `OpenAiPageVisionExtractor`([소스](backend/src/main/java/com/policyfund/notices/preprocess/OpenAiPageVisionExtractor.java))·질문 분류기도 오프라인 폴백 빈이 없어 OpenAI를 쓴다. `sk-noop`이면 컨텍스트만 뜨고 실제 호출은 실패하며, **빈 문자열이면 컨텍스트가 뜨지 않는다.** 키 없이 돌리려면 provider를 `hash`/`offline`로 전환한다(이 경우 검색은 동작하지만 의미 검색 품질이 낮고 답변은 근거 나열에 그치며, Vision OCR·비캐시 랭킹은 여전히 실패).
 
 **주요 엔드포인트** (베이스 `/api/v1`)
 
@@ -132,7 +132,7 @@ cd backend && ./gradlew test
 - 랭킹/온보딩: `GET /rankings?period=...`(period 필수) · `GET /onboarding?period=...`(period 선택, 기본 `최근 30일`)
 - 운영: `GET /actuator/health`(상태만 노출)
 
-> 검색(기본 vector 경로): 질의를 256차원 해시 임베딩으로 변환 → `chunk_embedding` 전체 로드 후 in-app 코사인 유사도(brute-force, MySQL8 호환·VECTOR 타입 없음) top-20 → 오프라인 합성기가 최대 5건을 근거로 제시. 데이터는 부팅 시 [`out/`](out/)의 `chunks.jsonl`에서 적재된다.
+> 검색(기본 vector 경로): 질의를 OpenAI 임베딩(1536차원)으로 변환 → `chunk_embedding` 전체 로드 후 in-app 코사인 유사도(brute-force, MySQL8 호환·VECTOR 타입 없음) top-20 → gpt-4o 합성기가 답변을 생성(근거 조항은 LLM 출력이 아니라 실제 검색 상위 5건으로 확정 채움, 중복 요약·상충 표기 포함). 데이터는 부팅 시 [`out/`](out/)의 `chunks.jsonl`에서 OpenAI 임베딩으로 적재된다.
 
 ### 3. 프론트엔드 ([`frontend/`](frontend/), React + Vite)
 
@@ -154,14 +154,14 @@ npm run preview    # 프로덕션 빌드 로컬 미리보기
 
 | 변수 | 적용 대상 | 설명 | 기본/오프라인값 |
 |------|-----------|------|------------------|
-| `OPENAI_API_KEY` | 백엔드·파이프라인 | Spring AI(gpt-4o·임베딩), Vision OCR, 질문 분류, 파이프라인 Vision에 사용. `sk-noop`(또는 미설정)이면 컨텍스트는 기동되고 실제 OpenAI 호출만 실패. **빈 문자열은 부팅 실패**(기본값 sk-noop을 덮어씀) | `sk-noop` |
+| `OPENAI_API_KEY` | 백엔드·파이프라인 | Spring AI(gpt-4o·임베딩), Vision OCR, 질문 분류에 사용. **기본 검색이 openai라 실제 키 필요.** `sk-noop`이면 기동만 가능(검색·적재 실패), **빈 문자열은 부팅 실패** | 실제 `sk-...` 키 |
 | `DB_USERNAME` / `DB_PASSWORD` | 백엔드·MySQL | MySQL 자격증명. `local` 프로파일 코드 기본 `policyfund`/`policyfund`, `docker` 프로파일은 기본 없음 | `policyfund` (local) |
 | `DB_ROOT_PASSWORD` | MySQL | MySQL root 비밀번호(헬스체크·초기화) | `change-me-root` (.env.example) |
 | `SPRING_PROFILES_ACTIVE` | 백엔드 | datasource 바인딩 선택(`local`/`docker`). 미설정 시 datasource 없음 | (없음) |
 | `NGINX_PORT` | 인프라 | 엣지 nginx 호스트 포트 | `80` |
 | `search.retrieval` | 백엔드 | 검색 어댑터(`vector` 기본 / `fulltext`) | `vector` |
-| `search.embedding.provider` | 백엔드 | 임베딩(`hash` 오프라인 기본 256차원 / `openai`) | `hash` |
-| `search.synth.provider` | 백엔드 | 답변 합성(`offline` 기본 / `openai`) | `offline` |
+| `search.embedding.provider` | 백엔드 | 임베딩(`openai` 기본 1536차원 / `hash` 오프라인 256차원). `SEARCH_EMBEDDING_PROVIDER`로 오버라이드 | `openai` |
+| `search.synth.provider` | 백엔드 | 답변 합성(`openai` 기본 gpt-4o / `offline` 근거 나열). `SEARCH_SYNTH_PROVIDER`로 오버라이드 | `openai` |
 | `search.ingest.on-startup` | 백엔드 | 부팅 시 `out/**/chunks.jsonl` 자동 적재(테이블 비었을 때) | `true` |
 | `app.assets.dir` | 백엔드 | 추출 PNG 저장 디렉터리(`APP_ASSETS_DIR`로 오버라이드) | `./data/assets` |
 | `VITE_API_BASE_URL` | 프론트엔드 | API 베이스 URL 오버라이드 | `/api/v1` |
@@ -174,7 +174,7 @@ npm run preview    # 프로덕션 빌드 로컬 미리보기
 
 ## 주요 기능
 
-- **자연어 검색 + 답변 합성** — 정책공고 청크에 대한 RAG 검색. 기본은 MySQL 저장 임베딩 위 코사인 벡터 검색(오프라인 해시 임베딩 + 오프라인 합성), 선택적으로 MySQL FULLTEXT(ngram) 풀텍스트 검색 및 OpenAI 답변 합성(중복 요약·충돌 표기 포함)으로 전환 가능. 질의/답변은 검색 이력으로 저장된다.
+- **자연어 검색 + 답변 합성** — 정책공고 청크에 대한 RAG 검색. 기본은 OpenAI 의미 임베딩(1536차원) 위 코사인 벡터 검색 + gpt-4o 답변 합성(근거 조항은 실제 검색 상위 5건으로 확정 채움, 중복 요약·상충 표기 포함). 키 없이 돌릴 땐 오프라인 해시 임베딩 + 근거 나열 합성으로, 또는 MySQL FULLTEXT(ngram) 풀텍스트 검색으로 전환 가능. 질의/답변은 검색 이력으로 저장된다.
 - **공고 버전관리 / diff** — 공고(`regulation`)·참고자료(`reference`)를 단일 출처 문서로 버전 누적 관리하고, 직전 버전 대비 LCS 기반 블록 diff(same/add/del)를 제공한다.
 - **질문 랭킹** — 검색 이력을 기간별로 분류·집계해 자주 묻는 질문 카테고리 랭킹을 산출하고 `ranking_cache`에 캐싱한다.
 - **온보딩 가이드** — 랭킹 결과를 1:1로 학습 우선순위 리스트로 변환해 신규 담당자 온보딩에 활용한다.
