@@ -3,11 +3,13 @@ package com.policyfund.search.synth;
 import com.policyfund.search.dto.Article;
 import com.policyfund.search.dto.SearchResult;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@ConditionalOnProperty(name = "search.synth.provider", havingValue = "openai")
 public class OpenAiAnswerSynthesizer implements AnswerSynthesizer {
 
     private static final String SYSTEM = """

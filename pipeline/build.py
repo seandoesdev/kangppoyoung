@@ -14,7 +14,7 @@ from . import models as M
 from . import relations as R
 from . import tables as T
 from .config import Config
-from .extract import PageData, extract_document
+from .extract import PageData, TableRegion, extract_document
 from .raw import RawChunk
 from .structure import HeadingTracker, classify_line
 
@@ -32,9 +32,13 @@ def build_chunks(pdf_path: str, cfg: Config) -> tuple[list[M.Chunk], dict]:
     pages = extract_document(pdf_path)
     tracker = HeadingTracker()
     raws: list[RawChunk] = []
+    # 표는 페이지 넘김 병합(§7.5)을 위해 본문과 분리 수집(문서 읽기순: page asc, y asc).
+    page_tables: list[tuple[int, TableRegion]] = []
+    table_ctx: dict[int, list[str]] = {}  # id(TableRegion) → 표 위치의 heading_path 스냅샷
     for pd in pages:
-        raws.extend(_process_page(pd, tracker, document_id, cfg))
+        raws.extend(_process_page(pd, tracker, document_id, cfg, page_tables, table_ctx))
 
+    raws.extend(_build_table_raws(page_tables, table_ctx, document_id, cfg))
     raws.sort(key=lambda r: (r.page_no or 0, round(r.order_y, 1), round(r.order_x, 1)))
     chunks = _to_models(raws, document_id, file_name, cfg)
     R.link(chunks)
@@ -49,7 +53,43 @@ def build_chunks(pdf_path: str, cfg: Config) -> tuple[list[M.Chunk], dict]:
     return chunks, doc_info
 
 
-def _process_page(pd: PageData, tracker: HeadingTracker, document_id: str, cfg: Config) -> list[RawChunk]:
+def _build_table_raws(
+    page_tables: list[tuple[int, TableRegion]],
+    table_ctx: dict[int, list[str]],
+    document_id: str,
+    cfg: Config,
+) -> list[RawChunk]:
+    """수집한 표를 페이지 넘김 병합(§7.5)한 뒤 RawChunk로 변환한다.
+
+    병합된 논리 표는 단일 table_id·page_range[first,last]를 갖고, heading 컨텍스트는 첫(앵커)
+    표 위치의 스냅샷을 쓴다."""
+    out: list[RawChunk] = []
+    for anchor_page, page_range, tr in T.merge_cross_page(page_tables):
+        # heading 컨텍스트: 비병합 표는 원본 객체 id로, 병합 표(새 객체)는 앵커 페이지 첫 표로 조회.
+        heading_path = table_ctx.get(id(tr))
+        if heading_path is None:
+            heading_path = table_ctx.get(id(_first_region(page_tables, anchor_page)), [])
+        out.extend(
+            T.build_table_chunks(tr, anchor_page, heading_path, document_id, cfg, page_range=page_range)
+        )
+    return out
+
+
+def _first_region(page_tables: list[tuple[int, TableRegion]], page_no: int) -> TableRegion | None:
+    for p, tr in page_tables:
+        if p == page_no:
+            return tr
+    return None
+
+
+def _process_page(
+    pd: PageData,
+    tracker: HeadingTracker,
+    document_id: str,
+    cfg: Config,
+    page_tables: list[tuple[int, TableRegion]],
+    table_ctx: dict[int, list[str]],
+) -> list[RawChunk]:
     out: list[RawChunk] = []
     events: list[tuple] = []
     for ln in pd.lines:
@@ -110,7 +150,9 @@ def _process_page(pd: PageData, tracker: HeadingTracker, document_id: str, cfg: 
                     flush()
         elif kind == "table":
             flush()
-            out.extend(T.build_table_chunks(obj, pd.page_no, tracker.path(), document_id, cfg))
+            # 표 청크 생성은 페이지 넘김 병합(§7.5) 이후로 지연. 위치의 heading 컨텍스트만 스냅샷.
+            page_tables.append((pd.page_no, obj))
+            table_ctx[id(obj)] = list(tracker.path())
         elif kind == "image":
             flush()
             rc = F.build_figure(obj, pd.page_no, tracker.path(), document_id, cfg)

@@ -6,11 +6,14 @@ import com.policyfund.search.dto.Article;
 import com.policyfund.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestPropertySource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+// 이 테스트는 MySQL FULLTEXT 검색 어댑터를 검증한다. 앱 기본값은 vector 이므로 fulltext 로 고정.
+@TestPropertySource(properties = "search.retrieval=fulltext")
 class ArticleRetrievalIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired ArticleRepository articles;

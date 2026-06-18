@@ -15,7 +15,10 @@ services:
       retries: 10
 
   backend:
-    build: ./backend
+    # 컨텍스트=루트: backend(Java) + pipeline(Python) 를 한 이미지에 함께 빌드(설계 §16.6 A).
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     env_file: .env
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -24,6 +27,9 @@ services:
         condition: service_healthy
     expose:
       - "8080"
+    volumes:
+      # 파이프라인 산출물(out/**/chunks.jsonl)을 읽기전용으로 마운트 → 부팅 시 벡터DB 자동 적재.
+      - ./out:/app/out:ro
 
   frontend:
     # Vite 정적 빌드를 자체 nginx 로 서빙(SPA 폴백). 엣지 nginx 가 / 를 이 서비스로 프록시.

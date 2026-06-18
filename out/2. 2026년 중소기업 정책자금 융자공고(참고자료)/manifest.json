@@ -22,9 +22,9 @@
     "layout_analysis": 24
   },
   "outputs": {
-    "xml": "C:\\kangppoyoung\\out\\2. 2026년 중소기업 정책자금 융자공고(참고자료)\\chunks.xml",
-    "jsonl": "C:\\kangppoyoung\\out\\2. 2026년 중소기업 정책자금 융자공고(참고자료)\\chunks.jsonl",
-    "manifest": "C:\\kangppoyoung\\out\\2. 2026년 중소기업 정책자금 융자공고(참고자료)\\manifest.json"
+    "xml": "/data/out/2. 2026년 중소기업 정책자금 융자공고(참고자료)/chunks.xml",
+    "jsonl": "/data/out/2. 2026년 중소기업 정책자금 융자공고(참고자료)/chunks.jsonl",
+    "manifest": "/data/out/2. 2026년 중소기업 정책자금 융자공고(참고자료)/manifest.json"
   },
   "review_required": {
     "count": 35,
@@ -75,9 +75,9 @@
   "offline": true,
   "provider": "offline",
   "timings_ms": {
-    "build_ms": 2840,
-    "serialize_ms": 79,
-    "verify_ms": 2867
+    "build_ms": 3007,
+    "serialize_ms": 84,
+    "verify_ms": 2826
   },
   "verification": {
     "checks": {

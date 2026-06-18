@@ -7,11 +7,15 @@ plugins {
 group = 'com.policyfund'
 version = '0.1.0'
 
+// Docker Desktop 29.x(API 1.53)는 구버전 docker-java의 named-pipe 요청을 400으로 거부한다.
+// Spring Boot BOM의 testcontainers를 최신 docker-java 포함 버전으로 상향한다.
+ext['testcontainers.version'] = '1.21.4'
+
 java {
     toolchain {
-        // 이 환경은 JDK 25(LTS)만 설치되어 있고 Gradle 9.5.1이 이를 지원한다.
-        // PRD의 Java 21 의도(최신 LTS)를 환경에 맞춰 Java 25 LTS로 충족한다.
-        languageVersion = JavaLanguageVersion.of(25)
+        // PRD 의도대로 Java 21 LTS 사용. JDK 25는 Testcontainers/docker-java(named-pipe)와
+        // 비호환이라 통합테스트가 기동 전 실패하므로, 안정 LTS(21)로 고정한다.
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 

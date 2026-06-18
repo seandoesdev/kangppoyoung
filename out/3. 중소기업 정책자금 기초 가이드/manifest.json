@@ -21,9 +21,9 @@
     "pdf_text": 55
   },
   "outputs": {
-    "xml": "C:\\kangppoyoung\\out\\3. 중소기업 정책자금 기초 가이드\\chunks.xml",
-    "jsonl": "C:\\kangppoyoung\\out\\3. 중소기업 정책자금 기초 가이드\\chunks.jsonl",
-    "manifest": "C:\\kangppoyoung\\out\\3. 중소기업 정책자금 기초 가이드\\manifest.json"
+    "xml": "/data/out/3. 중소기업 정책자금 기초 가이드/chunks.xml",
+    "jsonl": "/data/out/3. 중소기업 정책자금 기초 가이드/chunks.jsonl",
+    "manifest": "/data/out/3. 중소기업 정책자금 기초 가이드/manifest.json"
   },
   "review_required": {
     "count": 15,
@@ -54,9 +54,9 @@
   "offline": true,
   "provider": "offline",
   "timings_ms": {
-    "build_ms": 181,
-    "serialize_ms": 12,
-    "verify_ms": 172
+    "build_ms": 217,
+    "serialize_ms": 18,
+    "verify_ms": 218
   },
   "verification": {
     "checks": {
