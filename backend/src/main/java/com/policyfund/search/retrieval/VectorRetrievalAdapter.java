@@ -15,14 +15,16 @@ import java.util.List;
 
 /**
  * 벡터(코사인 유사도) 기반 검색 어댑터. 질의를 임베딩하고 chunk_embedding 전량을 로드해
- * 코사인 유사도로 정렬, 상위 20개를 Article 로 매핑한다(브루트포스, MySQL 8.0 호환).
+ * 코사인 유사도로 정렬, 상위 TOP_K개를 Article 로 매핑한다(브루트포스, MySQL 8.0 호환).
+ * 청크가 잘게 쪼개져 있어(절차의 각 단계가 별도 청크) 전체 절차·목록 질의의 회수율을 높이려면
+ * 충분한 후보가 필요하므로 TOP_K 를 넉넉히 둔다(합성 단계 LLM 이 순서대로 재구성).
  * search.retrieval=vector 일 때 활성화.
  */
 @Component
 @ConditionalOnProperty(name = "search.retrieval", havingValue = "vector")
 public class VectorRetrievalAdapter implements RetrievalPort {
 
-    private static final int TOP_K = 20;
+    private static final int TOP_K = 80;
 
     private final ChunkEmbeddingRepository repository;
     private final EmbeddingProvider embeddingProvider;
