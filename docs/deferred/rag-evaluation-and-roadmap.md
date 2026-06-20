@@ -131,5 +131,3 @@ P1로 상당 부분 풀리지만 추가로:
 | [`results-2026-06-20-avg10.md`](../eval/results-2026-06-20-avg10.md) | **병합 10회 평균 70.7 (신뢰 baseline)** |
 | [`results-2026-06-20-temp0-experiment.md`](../eval/results-2026-06-20-temp0-experiment.md) | temp 0 실험·되돌림 |
 | [`results-2026-06-20-retrieval.md`](../eval/results-2026-06-20-retrieval.md) | **교차 병합 2:1 → 72.1 (현재)** |
-| [`../plan/eval_and_retrieval_plan.md`](../plan/eval_and_retrieval_plan.md) | 평가·retrieval 계획 |
-| [`../plan/chunk_merge_impl_plan.md`](../plan/chunk_merge_impl_plan.md) | 청크 병합 설계 |
