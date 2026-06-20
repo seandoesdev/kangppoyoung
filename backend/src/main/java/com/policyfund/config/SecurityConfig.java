@@ -10,7 +10,7 @@ public class SecurityConfig {
 
     /**
      * 1차: 전 엔드포인트 permitAll. API는 무상태이므로 CSRF 비활성.
-     * 추후 인증/RBAC 도입 시 아래 분류대로 권한을 부여한다(BACKEND_PRD §9.1).
+     * 추후 인증/RBAC 도입 시 아래 분류대로 권한을 부여한다(PRD §9 보안).
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {

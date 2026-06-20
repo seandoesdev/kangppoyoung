@@ -4,8 +4,8 @@
 모든 데이터는 `<chunk>`(= `<meta>` 구조·출처·관계 + `<content>` 의미)로 분할되고,
 **원본 정본(`chunks.xml`)** 과 **검색용(`chunks.jsonl`)** 을 분리 산출한다.
 
-> 설계 문서: [`docs/prd/pdf-to-xml-pipeline.md`](../docs/prd/pdf-to-xml-pipeline.md) (얼개) +
-> [`docs/prd/pdf-to-xml-pipeline/`](../docs/prd/pdf-to-xml-pipeline/) (단계별 세부)
+> 설계·계약: [`docs/prd/PRD.md`](../docs/prd/PRD.md) §8 (파이프라인 요구사항 & 핵심 계약 —
+> CLI·종료코드·ProcessBuilder·chunks.xml/jsonl/manifest 스키마·결정론적 chunk_id)
 > 나중에 Spring 백엔드가 `ProcessBuilder`로 이 파이프라인을 스크립트 실행해 호출한다.
 
 ## 설치

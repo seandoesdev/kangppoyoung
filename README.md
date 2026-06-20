@@ -11,7 +11,7 @@
 | [`pipeline/`](pipeline/) | PDF → RAG 청크 변환 파이프라인 (Python 3.10+, 오프라인 기본·결정론적) |
 | [`backend/`](backend/) | Spring Boot 3.4.5 / Java 21 REST 백엔드 (검색·공고·랭킹·온보딩, 파이프라인을 동일 이미지에 번들) |
 | [`frontend/`](frontend/) | React 18 + Vite 5 + TypeScript SPA |
-| [`docs/`](docs/) | OpenAPI 계약(`api/`)·사용자 플로우(`user_flow/`)·검색 평가(`eval/`)·구현 계획(`plan/`)·PRD/설계(`prd/`) |
+| [`docs/`](docs/) | OpenAPI 계약(`api/`)·사용자 플로우(`user_flow/`)·검색 평가(`eval/`)·구현 계획(`plan/`)·통합 PRD(`prd/`) |
 | [`source/`](source/) | 입력 정책공고 PDF (예: `1. 2026년 중소기업 정책자금 융자계획 변경공고(...)` 등 3종) |
 | [`out/`](out/) | 파이프라인 산출물(`chunks.xml`/`chunks.jsonl`/`manifest.json`). git 추적 대상이며 백엔드가 부팅 시 읽기전용 마운트로 적재 |
 | [`nginx/`](nginx/) | 엣지 리버스 프록시 설정([`nginx/nginx.conf`](nginx/nginx.conf)) |
@@ -186,7 +186,6 @@ npm run preview    # 프로덕션 빌드 로컬 미리보기
 - 사용자 플로우: [`docs/user_flow/user_flow.md`](docs/user_flow/user_flow.md) — 제품(프론트)+백엔드 처리 흐름을 합친 **단일 정본**(UC별 화면·백엔드·핵심규칙)
 - 검색 평가: 세트 [`docs/eval/search-eval.md`](docs/eval/search-eval.md) · 결과 베이스라인 [`docs/eval/results-2026-06-20-baseline.md`](docs/eval/results-2026-06-20-baseline.md)
 - 향후 구현 계획: [`docs/plan/search-history-sidebar-plan.md`](docs/plan/search-history-sidebar-plan.md) (검색 기록 좌측 사이드바 노출)
-- 제품 요구사항(PRD): [`docs/prd/PRD.md`](docs/prd/PRD.md) · 백엔드 [`docs/prd/BACKEND_PRD.md`](docs/prd/BACKEND_PRD.md) · 보충 [`docs/prd/BACKEND_PRD_SUPPLEMENT.md`](docs/prd/BACKEND_PRD_SUPPLEMENT.md)
-- 파이프라인 설계: 개요 [`docs/prd/pdf-to-xml-pipeline.md`](docs/prd/pdf-to-xml-pipeline.md) + 단계별 세부 [`docs/prd/pdf-to-xml-pipeline/`](docs/prd/pdf-to-xml-pipeline/)
+- 제품·기술 요구사항(PRD): [`docs/prd/PRD.md`](docs/prd/PRD.md) — 제품·백엔드·파이프라인을 통합한 **단일 정본**(UC·FR·데이터모델·API계약·파이프라인 계약·NFR·로드맵). 기준선은 [`docs/user_flow/user_flow.md`](docs/user_flow/user_flow.md)
 
 > 참고: 일부 설계 문서는 Java 25 / 패키지 `kr.co.hakjisa.policyfund`를 언급하나, 실제 코드는 **Java 21 / 패키지 `com.policyfund`** 가 기준이다.

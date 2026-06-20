@@ -4,7 +4,7 @@
 > **단일 정본 사용자 플로우 문서**다. (기존 `user_flow.md` + `backend_user_flow.md`를 대체)
 > 각 UC에 대해 **(a) 사용자·화면 흐름**, **(b) 백엔드 처리 흐름**, **(c) 핵심 규칙**을 함께 제시하며,
 > 이 문서가 앞으로 작성될 PRD의 시드(seed)가 된다.
-> 관련 문서: [PRD](../prd/PRD.md) · [Backend PRD](../prd/BACKEND_PRD.md) · [OpenAPI](../api/openapi.yaml) · [CLAUDE.md](../../CLAUDE.md)
+> 관련 문서: [PRD](../prd/PRD.md) · [OpenAPI](../api/openapi.yaml) · [CLAUDE.md](../../CLAUDE.md)
 >
 > **흐름 표기:** `→` 다음 단계, `⇒` 외부/AI 호출(Spring AI·OpenAI), `▣` MySQL 영구 저장.
 >
@@ -509,7 +509,7 @@
   `GET /notices/assets/{id}`는 코드에만 존재 → openapi.yaml 추가 필요, §9.)
 - **인증(확장 지점):** **현재 전 엔드포인트 `permitAll()`**(SecurityConfig). Spring Security 필터 체인
   골격에서 변경성 엔드포인트(등록·삭제)는 향후 `authenticated()`로 분리, 추후 RBAC(문서 관리자 권한)로
-  전환 예정. 상세 분류는 [BACKEND_PRD §9.1](../prd/BACKEND_PRD.md) 참조.
+  전환 예정. 상세 분류는 [PRD §9 (NFR·보안)](../prd/PRD.md) 참조.
 - **레이트리밋:** `POST /search`(분당 20회), `POST /revisions/preprocess`(분당 5회)는 PRD 규칙이나
   **현재 코드에 미구현**(nginx `limit_req`·Bucket4j·버킷/스로틀 부재). P1 단계 작업으로 분류(§9).
 - **PII 마스킹:** PRD 규칙(이름·사업자번호 등 마스킹 후 ChatClient 전달)이나 **현재 미구현** — 질의·답변

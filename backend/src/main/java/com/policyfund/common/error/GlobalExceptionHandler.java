@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUncaught(Exception ex) {
-        // 원인은 서버 로그에만 기록한다. 클라이언트에는 고정 메시지만 반환(BACKEND_PRD §9.5).
+        // 원인은 서버 로그에만 기록한다. 클라이언트에는 고정 메시지만 반환(PRD §9 에러 마스킹).
         log.error("Unhandled exception", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse("INTERNAL_ERROR", "서버 오류가 발생했습니다"));
