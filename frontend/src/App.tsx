@@ -13,6 +13,7 @@ export default function App() {
         <div className="mx-auto max-w-4xl px-8 py-8">
           <Routes>
             <Route path="/" element={<Search />} />
+            <Route path="/q/:sessionId" element={<Search />} />
             <Route path="/notice" element={<Navigate to="/notice/regulation" replace />} />
             <Route path="/notice/:category" element={<PolicyNotice />} />
             <Route path="/ranking" element={<Ranking />} />

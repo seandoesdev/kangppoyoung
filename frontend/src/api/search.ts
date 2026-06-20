@@ -15,9 +15,14 @@ export function listSearchHistory(params?: {
   return http.get<SearchHistoryItem[]>('/search/history', params)
 }
 
-/** DELETE /search/history/{id} — 특정 검색(채팅) 기록 1건 삭제 */
-export function deleteSearchHistory(id: string): Promise<void> {
-  return http.delete(`/search/history/${encodeURIComponent(id)}`)
+/** GET /search/history/{sessionId} — 세션 id(UUID)로 단건 조회 (딥링크/새로고침 복원용) */
+export function getSearchHistoryItem(sessionId: string): Promise<SearchHistoryItem> {
+  return http.get<SearchHistoryItem>(`/search/history/${encodeURIComponent(sessionId)}`)
+}
+
+/** DELETE /search/history/{sessionId} — 세션 id(UUID)로 기록 1건 삭제 (멱등) */
+export function deleteSearchHistory(sessionId: string): Promise<void> {
+  return http.delete(`/search/history/${encodeURIComponent(sessionId)}`)
 }
 
 /** DELETE /search/history — 검색(채팅) 기록 전체 삭제 */

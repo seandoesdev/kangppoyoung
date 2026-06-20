@@ -79,24 +79,53 @@ paths:
         '204':
           description: 전체 삭제됨
 
-  /search/history/{id}:
+  /search/history/{sessionId}:
+    get:
+      tags: [search]
+      operationId: getSearchHistoryItem
+      summary: 세션 id(UUID)로 검색(채팅) 기록 단건 조회
+      description: >-
+        sessionId(UUID v4)에 해당하는 검색 기록 1건을 반환한다.
+        URL(/q/{sessionId}) 공유·복원 시 사용한다. (UC-1 / FR-1.6)
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+          description: 조회할 검색 기록의 세션 id (UUID v4)
+      responses:
+        '200':
+          description: 검색 기록 단건
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchHistoryItem'
+              examples:
+                found:
+                  summary: 존재하는 세션 조회
+                  value:
+                    id: "1"
+                    sessionId: "550e8400-e29b-41d4-a716-446655440000"
+                    query: "대출 한도는 얼마인가요?"
+                    createdAt: "2026-06-20T09:00:00Z"
+        '404':
+          $ref: '#/components/responses/NotFound'
     delete:
       tags: [search]
       operationId: deleteSearchHistory
-      summary: 특정 검색(채팅) 기록 항목 1건 삭제
+      summary: 세션 id(UUID)로 검색(채팅) 기록 1건 삭제
       description: >-
-        SearchHistoryItem.id 에 해당하는 항목 1건을 삭제한다.
-        멱등(idempotent) 동작: 존재하지 않는 id 도 204 를 반환한다.
-        서버 내부적으로 Long 을 문자열화하여 id 로 노출한다.
+        세션 id(UUID)로 1건 삭제. 미존재 sessionId 도 멱등하게 204 반환.
+        (UC-1 / FR-1.6)
       parameters:
-        - name: id
+        - name: sessionId
           in: path
           required: true
-          schema: { type: string }
-          description: 삭제할 검색 기록 항목의 id (SearchHistoryItem.id)
+          schema: { type: string, format: uuid }
+          description: 삭제할 검색 기록의 세션 id (UUID v4)
       responses:
         '204':
-          description: 삭제됨(존재하지 않는 id 도 동일)
+          description: 삭제됨(존재하지 않는 sessionId 도 동일)
 
   /search/examples:
     get:
@@ -402,9 +431,13 @@ components:
 
     SearchHistoryItem:
       type: object
-      required: [id, query, createdAt]
+      required: [id, sessionId, query, createdAt]
       properties:
         id: { type: string }
+        sessionId:
+          type: string
+          format: uuid
+          description: "URL(/q/{sessionId})로 이 기록을 식별·복원하는 UUID v4."
         query: { type: string }
         createdAt: { type: string, format: date-time }
         result: { $ref: '#/components/schemas/SearchResult' }

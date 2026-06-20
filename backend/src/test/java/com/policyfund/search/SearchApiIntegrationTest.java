@@ -71,6 +71,7 @@ class SearchApiIntegrationTest extends AbstractIntegrationTest {
            .andExpect(jsonPath("$").isArray())
            .andExpect(jsonPath("$[0].query").value("두번째 질의"))
            .andExpect(jsonPath("$[0].id").exists())
+           .andExpect(jsonPath("$[0].sessionId").exists())
            .andExpect(jsonPath("$[0].createdAt").exists());
     }
 
@@ -79,33 +80,49 @@ class SearchApiIntegrationTest extends AbstractIntegrationTest {
         mvc.perform(post("/api/v1/search").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"query\":\"삭제대상 질의\"}")).andExpect(status().isOk());
 
-        // 방금 저장된 최신 1건의 id 추출
+        // 방금 저장된 최신 1건의 sessionId 추출
         String body = mvc.perform(get("/api/v1/search/history").param("page", "0").param("size", "1"))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         JsonNode arr = objectMapper.readTree(body);
-        String id = arr.get(0).get("id").asText();
+        String sessionId = arr.get(0).get("sessionId").asText();
 
-        mvc.perform(delete("/api/v1/search/history/" + id))
+        mvc.perform(delete("/api/v1/search/history/" + sessionId))
            .andExpect(status().isNoContent());
 
-        // 그 id 는 더 이상 목록에 없어야 한다
+        // 그 sessionId 는 더 이상 목록에 없어야 한다
         mvc.perform(get("/api/v1/search/history").param("page", "0").param("size", "100"))
            .andExpect(status().isOk())
-           .andExpect(jsonPath("$[?(@.id == '" + id + "')]").isEmpty());
+           .andExpect(jsonPath("$[?(@.sessionId == '" + sessionId + "')]").isEmpty());
     }
 
     @Test
-    void deleteHistory_unknownNumericId_isIdempotent204() throws Exception {
-        mvc.perform(delete("/api/v1/search/history/99999999"))
+    void deleteHistory_unknownSession_isIdempotent204() throws Exception {
+        // 미존재 sessionId(임의 UUID)도 500 이 아니라 멱등 204 여야 한다.
+        mvc.perform(delete("/api/v1/search/history/" + java.util.UUID.randomUUID()))
            .andExpect(status().isNoContent());
     }
 
     @Test
-    void deleteHistory_nonNumericId_isIdempotent204() throws Exception {
-        // 계약상 id 는 문자열. 숫자가 아니어도 500 이 아니라 멱등 204 여야 한다.
-        mvc.perform(delete("/api/v1/search/history/not-a-number"))
-           .andExpect(status().isNoContent());
+    void getHistoryItem_bySessionId_returnsItem() throws Exception {
+        mvc.perform(post("/api/v1/search").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"query\":\"단건 조회 질의\"}")).andExpect(status().isOk());
+        String body = mvc.perform(get("/api/v1/search/history").param("page", "0").param("size", "1"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String sessionId = objectMapper.readTree(body).get(0).get("sessionId").asText();
+
+        mvc.perform(get("/api/v1/search/history/" + sessionId))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.sessionId").value(sessionId))
+           .andExpect(jsonPath("$.query").value("단건 조회 질의"))
+           .andExpect(jsonPath("$.result").exists());
+    }
+
+    @Test
+    void getHistoryItem_unknownSession_returns404() throws Exception {
+        mvc.perform(get("/api/v1/search/history/" + java.util.UUID.randomUUID()))
+           .andExpect(status().isNotFound());
     }
 
     @Test

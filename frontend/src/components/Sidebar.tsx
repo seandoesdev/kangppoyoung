@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useSearchHistory } from '../context/SearchHistoryContext'
 
 const linkClass = (isActive: boolean) =>
@@ -10,14 +10,14 @@ const linkClass = (isActive: boolean) =>
 export default function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
   const noticeOpen = location.pathname.startsWith('/notice')
   const [open, setOpen] = useState(noticeOpen)
   const [historyOpen, setHistoryOpen] = useState(true)
 
   const { items, loading, hasMore, loadMore, remove, clear } = useSearchHistory()
-  const onSearch = location.pathname === '/'
-  const activeId = onSearch ? searchParams.get('id') : null
+  // 현재 보고 있는 세션(/q/<sessionId>)을 강조 표시한다.
+  const sessionMatch = location.pathname.match(/^\/q\/(.+)$/)
+  const activeSession = sessionMatch ? decodeURIComponent(sessionMatch[1]) : null
 
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
@@ -37,9 +37,9 @@ export default function Sidebar() {
     return () => io.disconnect()
   }, [historyOpen, loadMore, items.length, hasMore])
 
-  async function handleRemove(id: string) {
+  async function handleRemove(sessionId: string) {
     try {
-      await remove(id)
+      await remove(sessionId)
     } catch {
       // 삭제 실패 시 항목 유지
     }
@@ -113,7 +113,7 @@ export default function Sidebar() {
           <span className="flex-1">온보딩 가이드</span>
         </NavLink>
 
-        {/* 채팅 기록 — 무한 스크롤 + 항목/전체 삭제 */}
+        {/* 채팅 기록 — 무한 스크롤 + 항목/전체 삭제. 클릭 시 /q/<sessionId> 로 복원 */}
         <div>
           <button
             onClick={() => setHistoryOpen((v) => !v)}
@@ -130,16 +130,16 @@ export default function Sidebar() {
                   <p className="px-3 py-2 text-xs text-slate-400">채팅 기록 없음</p>
                 )}
                 {items.map((it) => {
-                  const active = activeId === it.id
+                  const active = activeSession === it.sessionId
                   return (
                     <div
-                      key={it.id}
+                      key={it.sessionId}
                       className={`group flex items-center gap-1 rounded-lg pr-1 transition ${
                         active ? 'bg-slate-100' : 'hover:bg-slate-100'
                       }`}
                     >
                       <button
-                        onClick={() => navigate(`/?q=${encodeURIComponent(it.query)}&id=${it.id}`)}
+                        onClick={() => navigate(`/q/${encodeURIComponent(it.sessionId)}`)}
                         title={it.query}
                         className={`min-w-0 flex-1 truncate px-3 py-2 text-left text-sm transition ${
                           active ? 'font-semibold text-slate-900' : 'text-slate-500'
@@ -148,7 +148,7 @@ export default function Sidebar() {
                         {it.query}
                       </button>
                       <button
-                        onClick={() => handleRemove(it.id)}
+                        onClick={() => handleRemove(it.sessionId)}
                         aria-label="기록 삭제"
                         className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-300 opacity-0 transition hover:bg-slate-200 hover:text-rose-500 group-hover:opacity-100"
                       >

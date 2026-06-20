@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { SEARCH_SCENARIOS } from '../data/mock'
 import type { SearchResult } from '../api/types'
 import { searchPolicy } from '../api/search'
@@ -16,8 +16,9 @@ import {
 const MAX_EXAMPLES = 5
 
 export default function Search() {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const { getCached, getById, refresh, hydrated } = useSearchHistory()
+  const { sessionId } = useParams()
+  const navigate = useNavigate()
+  const { getBySessionId, fetchSession, refresh } = useSearchHistory()
 
   const [query, setQuery] = useState('')
   const [result, setResult] = useState<SearchResult | null>(null)
@@ -30,81 +31,71 @@ export default function Search() {
   )
   const [newExample, setNewExample] = useState('')
 
-  // 검색 중복 실행 가드(effect 재실행·연타 대비). loading state 의존 없이 안정 identity 유지.
+  // 검색 중복 실행 가드(연타 대비; loading state 의존 없이 안정 동작).
   const busyRef = useRef(false)
-  // 이미 처리(복원/질의)한 ?q 값. items 변동으로 effect 가 재실행돼도 같은 q 재질의를 막는다.
-  const handledRef = useRef<string | null>(null)
 
-  // 백엔드 /api/v1/search 를 호출해 실제 검색 결과를 받아온다.
-  const runSearch = useCallback(
-    async (q: string) => {
-      const trimmed = q.trim()
-      if (!trimmed || busyRef.current) return
-      busyRef.current = true
-      setLoading(true)
-      setError(null)
-      try {
-        const r = await searchPolicy(trimmed)
-        setResult(r)
-        await refresh() // 새 검색을 사이드바 채팅 기록에 반영
-      } catch (e) {
-        setResult(null)
-        setError(e instanceof ApiError ? e.message : '검색 중 오류가 발생했습니다.')
-      } finally {
-        setLoading(false)
-        busyRef.current = false
-      }
-    },
-    [refresh],
-  )
-
-  // 검색 트리거를 URL 로 일원화한다. 사이드바 클릭은 ?q=&id= (그 row 정확 복원), 입력/버튼/예시는 ?q=
-  // (캐시 복원 또는 재질의). items 변동으로 effect 가 재실행돼도 handledRef 로 같은 대상 중복 처리를 막는다.
+  // URL(/q/<sessionId>) 변경 시 그 세션을 복원한다. 적재된 목록에 있으면 즉시, 없으면(딥링크/새로고침)
+  // 백엔드 단건 조회로 가져온다. sessionId 가 없으면(홈 '/') 새 대화로 초기화한다.
   useEffect(() => {
-    const id = searchParams.get('id')
-    const q = searchParams.get('q')?.trim() ?? ''
-
-    // 1) 사이드바 클릭: 정확한 row(id) 복원 — 같은 질의의 다른 row 와 혼동 방지.
-    if (id) {
-      if (handledRef.current === `id:${id}`) return
-      const cached = getById(id)
-      if (cached) {
-        handledRef.current = `id:${id}`
-        setQuery(cached.query ?? q)
-        setResult(cached)
-        setError(null)
-        return
-      }
-      if (!hydrated) return // 목록 적재 전 → hydration 후 재평가
-      // hydrated 인데 id 없음(삭제/범위 밖) → 아래 q 경로로 폴백
-    }
-
-    // 2) 질의(q) 기반: 캐시 복원 또는 재질의.
-    if (!q) {
-      handledRef.current = null
+    if (!sessionId) {
+      setResult(null)
+      setQuery('')
+      setError(null)
       return
     }
-    const key = `q:${q}`
-    if (handledRef.current === key) return
-    const cached = getCached(q)
+    const cached = getBySessionId(sessionId)
     if (cached) {
-      handledRef.current = key
-      setQuery(q)
+      setQuery(cached.query)
       setResult(cached)
       setError(null)
       return
     }
-    if (!hydrated) return // 캐시 적재 전이면 재질의 보류(이미 있는 질의의 불필요한 재검색 방지)
-    handledRef.current = key
-    setQuery(q)
-    void runSearch(q)
-  }, [searchParams, getCached, getById, hydrated, runSearch])
+    let ignore = false
+    setLoading(true)
+    setError(null)
+    fetchSession(sessionId)
+      .then((item) => {
+        if (ignore) return
+        if (item?.result) {
+          setQuery(item.query)
+          setResult(item.result)
+        } else {
+          setResult(null)
+          setQuery('')
+          setError('해당 대화를 찾을 수 없습니다.')
+        }
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false)
+      })
+    return () => {
+      ignore = true
+    }
+    // sessionId 변경에만 반응한다(getBySessionId/fetchSession 은 변경 시점의 최신 클로저 사용).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId])
 
-  // 검색 실행 = URL 변경. 실제 질의는 위 effect 가 담당한다.
-  function submit(q: string) {
+  // 새 검색: 백엔드 질의 → 기록 갱신 → 생성된 세션(/q/<sessionId>)으로 이동(딥링크·공유 가능).
+  async function submit(q: string) {
     const trimmed = q.trim()
-    if (!trimmed) return
-    setSearchParams({ q: trimmed })
+    if (!trimmed || busyRef.current) return
+    busyRef.current = true
+    setLoading(true)
+    setError(null)
+    setQuery(trimmed)
+    try {
+      const r = await searchPolicy(trimmed)
+      setResult(r)
+      const fresh = await refresh() // 사이드바 채팅 기록 갱신 + 신규 sessionId 획득
+      const newest = fresh && fresh[0]
+      if (newest?.sessionId) navigate(`/q/${encodeURIComponent(newest.sessionId)}`)
+    } catch (e) {
+      setResult(null)
+      setError(e instanceof ApiError ? e.message : '검색 중 오류가 발생했습니다.')
+    } finally {
+      setLoading(false)
+      busyRef.current = false
+    }
   }
 
   function addExample() {

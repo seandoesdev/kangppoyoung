@@ -20,6 +20,10 @@ public class SearchHistoryEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // URL(/q/<session_id>) 식별용 UUID. 행 생성 시 부여한다.
+    @Column(name = "session_id", nullable = false, unique = true, length = 36)
+    private String sessionId;
+
     private String query;
 
     @Column(columnDefinition = "TEXT")
@@ -34,7 +38,8 @@ public class SearchHistoryEntity {
 
     protected SearchHistoryEntity() {}
 
-    public SearchHistoryEntity(String query, String answer, SearchResult resultJson, Instant createdAt) {
+    public SearchHistoryEntity(String sessionId, String query, String answer, SearchResult resultJson, Instant createdAt) {
+        this.sessionId = sessionId;
         this.query = query;
         this.answer = answer;
         this.resultJson = resultJson;
@@ -42,6 +47,7 @@ public class SearchHistoryEntity {
     }
 
     public Long getId() { return id; }
+    public String getSessionId() { return sessionId; }
     public String getQuery() { return query; }
     public Instant getCreatedAt() { return createdAt; }
     public SearchResult getResultJson() { return resultJson; }

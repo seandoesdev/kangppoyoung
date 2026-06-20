@@ -45,6 +45,8 @@ export interface SearchResult {
 /** SearchHistoryItem */
 export interface SearchHistoryItem {
   id: string
+  /** URL(/q/{sessionId})로 이 기록을 식별·복원하는 UUID v4 */
+  sessionId: string
   query: string
   createdAt: string
   result?: SearchResult
