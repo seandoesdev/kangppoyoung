@@ -1,5 +1,7 @@
 package com.policyfund.search;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.policyfund.search.dto.Article;
 import com.policyfund.search.dto.SearchResult;
 import com.policyfund.search.synth.AnswerSynthesizer;
@@ -15,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -35,6 +38,7 @@ class SearchApiIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Autowired MockMvc mvc;
+    @Autowired ObjectMapper objectMapper;
 
     @Test
     void search_returnsAnswerWithEvidence() throws Exception {
@@ -68,5 +72,54 @@ class SearchApiIntegrationTest extends AbstractIntegrationTest {
            .andExpect(jsonPath("$[0].query").value("두번째 질의"))
            .andExpect(jsonPath("$[0].id").exists())
            .andExpect(jsonPath("$[0].createdAt").exists());
+    }
+
+    @Test
+    void deleteHistory_removesThatRow() throws Exception {
+        mvc.perform(post("/api/v1/search").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"query\":\"삭제대상 질의\"}")).andExpect(status().isOk());
+
+        // 방금 저장된 최신 1건의 id 추출
+        String body = mvc.perform(get("/api/v1/search/history").param("page", "0").param("size", "1"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        JsonNode arr = objectMapper.readTree(body);
+        String id = arr.get(0).get("id").asText();
+
+        mvc.perform(delete("/api/v1/search/history/" + id))
+           .andExpect(status().isNoContent());
+
+        // 그 id 는 더 이상 목록에 없어야 한다
+        mvc.perform(get("/api/v1/search/history").param("page", "0").param("size", "100"))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$[?(@.id == '" + id + "')]").isEmpty());
+    }
+
+    @Test
+    void deleteHistory_unknownNumericId_isIdempotent204() throws Exception {
+        mvc.perform(delete("/api/v1/search/history/99999999"))
+           .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void deleteHistory_nonNumericId_isIdempotent204() throws Exception {
+        // 계약상 id 는 문자열. 숫자가 아니어도 500 이 아니라 멱등 204 여야 한다.
+        mvc.perform(delete("/api/v1/search/history/not-a-number"))
+           .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void clearHistory_removesAll() throws Exception {
+        mvc.perform(post("/api/v1/search").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"query\":\"지우기 대상 1\"}")).andExpect(status().isOk());
+        mvc.perform(post("/api/v1/search").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"query\":\"지우기 대상 2\"}")).andExpect(status().isOk());
+
+        mvc.perform(delete("/api/v1/search/history"))
+           .andExpect(status().isNoContent());
+
+        mvc.perform(get("/api/v1/search/history").param("page", "0").param("size", "100"))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.length()").value(0));
     }
 }
