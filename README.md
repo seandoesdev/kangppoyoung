@@ -183,7 +183,7 @@ npm run preview    # 프로덕션 빌드 로컬 미리보기
 ## 문서
 
 - API 계약: [`docs/api/openapi.yaml`](docs/api/openapi.yaml) (OpenAPI 3.1, `/api/v1`, 11개 오퍼레이션 / 경로 10개)
-- 사용자 플로우: 프론트 [`docs/user_flow/user_flow.md`](docs/user_flow/user_flow.md) · 백엔드 [`docs/user_flow/backend_user_flow.md`](docs/user_flow/backend_user_flow.md)
+- 사용자 플로우: [`docs/user_flow/user_flow.md`](docs/user_flow/user_flow.md) — 제품(프론트)+백엔드 처리 흐름을 합친 **단일 정본**(UC별 화면·백엔드·핵심규칙)
 - 검색 평가: 세트 [`docs/eval/search-eval.md`](docs/eval/search-eval.md) · 결과 베이스라인 [`docs/eval/results-2026-06-20-baseline.md`](docs/eval/results-2026-06-20-baseline.md)
 - 향후 구현 계획: [`docs/plan/search-history-sidebar-plan.md`](docs/plan/search-history-sidebar-plan.md) (검색 기록 좌측 사이드바 노출)
 - 제품 요구사항(PRD): [`docs/prd/PRD.md`](docs/prd/PRD.md) · 백엔드 [`docs/prd/BACKEND_PRD.md`](docs/prd/BACKEND_PRD.md) · 보충 [`docs/prd/BACKEND_PRD_SUPPLEMENT.md`](docs/prd/BACKEND_PRD_SUPPLEMENT.md)

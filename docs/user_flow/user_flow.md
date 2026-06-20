@@ -1,166 +1,565 @@
-# User Flow — 정책자금 지원 업무 플랫폼
+# 통합 User Flow — 정책자금 지원 업무 플랫폼 (제품 + 백엔드)
 
-> 본 문서는 [CLAUDE.md](../../CLAUDE.md)에 정의된 문제·해결 방향을 바탕으로
-> 사용자(업무담당자)의 주요 흐름을 정리한다.
+> 본 문서는 **제품(프론트엔드) 유저 플로우**와 **백엔드 처리 흐름**을 하나로 합친
+> **단일 정본 사용자 플로우 문서**다. (기존 `user_flow.md` + `backend_user_flow.md`를 대체)
+> 각 UC에 대해 **(a) 사용자·화면 흐름**, **(b) 백엔드 처리 흐름**, **(c) 핵심 규칙**을 함께 제시하며,
+> 이 문서가 앞으로 작성될 PRD의 시드(seed)가 된다.
+> 관련 문서: [PRD](../prd/PRD.md) · [Backend PRD](../prd/BACKEND_PRD.md) · [OpenAPI](../api/openapi.yaml) · [CLAUDE.md](../../CLAUDE.md)
+>
+> **흐름 표기:** `→` 다음 단계, `⇒` 외부/AI 호출(Spring AI·OpenAI), `▣` MySQL 영구 저장.
+>
+> **구현 상태 배지:** `[구현됨]` 실제 백엔드 연동 동작 · `[미연동]` 프론트가 mock/로컬 시뮬레이션으로만
+> 동작(API 클라이언트는 준비됨, 페이지 미호출) · `[미구현]` PRD/문서 규칙이나 코드 부재(향후 작업).
 
-## 1. 사용자 정의
+---
 
-- **주 사용자:** 정책자금 지원 업무담당자
-- **신규입사자:** 많은 규정·지침·절차를 학습해야 하는 입문 단계 담당자
+## 1. 사용자 정의 (Personas)
+
+- **주 사용자:** 정책자금 지원 업무담당자 — 규정·지침·절차를 빠르게 찾고, 전화 민원을 즉석에서 응대한다.
+- **신규입사자:** 많은 규정·지침·절차를 학습해야 하는 입문 단계 담당자 — "무엇부터 봐야 할지"를 안내받는다.
+
+> 현재 인증·사용자 식별 UI는 없다. 검색 기록·랭킹·온보딩은 **사용자 식별자 컬럼이 없는 전사 공용 데이터**로
+> 동작한다(다중 사용자 분리 아님). 인증·RBAC는 확장 지점으로만 설계되어 있다(§8 참조).
+
+---
 
 ## 2. 핵심 사용 시나리오 (Use Cases)
 
 | # | 시나리오 | 해결하는 문제 |
 | --- | --- | --- |
 | UC-1 | 통합 검색 — 자연어로 규정·지침·절차 질의 **및 민원 응대 중 실시간 검색** | 문서를 하나씩 찾는 시간 소모 / 전화 민원 즉석 응대 제한 |
-| ~~UC-2~~ | (UC-1로 통합) 민원 응대도 결국 규정·지침·절차 검색이므로 통합 검색에 합침 | — |
-| UC-3 | 변경된 절차 문서 업로드·최신화 | 변경 추적·갱신 누락 |
-| UC-4 | 유사 질문 카테고리·랭킹 조회 | 자주 묻는 내용 파악 |
-| UC-5 | 신규입사자 온보딩 가이드(UC-4 랭킹 기반) | 무엇부터 봐야 할지 모름 |
+| ~~UC-2~~ | (UC-1로 통합) 민원 응대도 결국 규정·지침·절차 검색이므로 통합 검색에 흡수 | — |
+| UC-3 | 정책 자금 공고 — 변경된 절차 문서 업로드·최신화 + 버전 비교 | 변경 추적·갱신 누락 |
+| UC-4 | 유사 질문 카테고리·랭킹 조회 (메뉴명: **질문 분석**) | 자주 묻는 내용 파악 |
+| UC-5 | 신규입사자 온보딩 가이드 (UC-4 랭킹 기반) | 무엇부터 봐야 할지 모름 |
 
-> **온보딩 설계 원칙:** UC-5는 별도의 추천 로직을 만들지 않는다.
-> 실제 실무자들이 **많이 보고·많이 검색한 결과(UC-4의 유사 질문 카테고리·랭킹)**를
-> 그대로 학습 우선순위로 환산하여 "무엇부터 봐야 하는지"를 안내한다.
+> **온보딩 설계 원칙:** UC-5는 별도의 추천 로직을 만들지 않는다. 실제 실무자들이
+> **많이 보고·많이 검색한 결과(UC-4의 유사 질문 카테고리·랭킹)**를 그대로 학습 우선순위로
+> 환산하여 "무엇부터 봐야 하는지"를 안내한다. 모든 질의가 다시 랭킹으로 환류된다(선순환).
+
+> **용어 정리(glossary):**
+> - 검색 근거 단위: 문서/PRD는 `Article`(article.text, articleNo)로 부르고, 실제 코드는 `chunk`
+>   (`chunk_id`, `chunk_embedding`, `seq_no`, `heading_path`) 단위로 동작한다. `article_no`는
+>   `heading_path`를 ` > `로 합쳐 유도하며 없으면 `'p.'+page_no`. 본 문서는 사용자 관점에서 '근거 조항',
+>   구현 관점에서 'chunk'로 표기한다.
+> - 메뉴/도메인명: UC-4 사이드바 메뉴명은 **'질문 분석'**(라우트 `/ranking`, API `/rankings`).
+>   기록 기능은 사용자 대면명 **'채팅 기록'**(💬, `/q` 라우트), 도메인명 **'검색 기록(`search_history`)'**.
+> - 식별자 체계: `sessionId`(UUIDv4, length 36, `/q/<sessionId>` 라우트) · DB `id`(Long을 문자열화) ·
+>   `exampleId`(예시질문 DB Long id) · 자산 id(sha256 64-hex). 삭제 단위·멱등성이 서로 다르다(§4 UC-1·UC-3).
 
 ---
 
-## 3. 주요 흐름 (Flows)
+## 3. 구성 요소 (Components)
 
-### UC-1. 통합 검색 (자연어 질의 + 민원 응대 통합)
+- **nginx** — `/api/v1/*` 요청을 백엔드(`:8080`)로 프록시.
+- **Controller** — OpenAPI operationId와 1:1. 요청 검증·DTO 변환.
+- **Service** — 비즈니스 로직(2-hop 검색 종합, 버전 누적, diff, 랭킹 집계).
+- **Spring AI `ChatClient`** — gpt-4o로 의도 분석·답변 합성·hop-2 판정·Vision OCR·질문 카테고리화.
+- **`EmbeddingProvider`** — 임베딩 벡터 생성. `openai`(1536차원) 또는 `hash`(오프라인·결정론).
+- **`RetrievalPort`** — 검색 후보 회수 추상화. **기본 활성=`VectorRetrievalAdapter`**(임베딩 코사인
+  brute-force on `chunk_embedding`). `MySqlFullTextRetrievalAdapter`는 클래스로 존재하나
+  `@ConditionalOnProperty(search.retrieval=vector)` 핀으로 **기본 비활성**. ChromaDB는 future.
+- **MySQL** — API에 필요한 핵심 데이터의 영구 저장소(`chunk_embedding`, `search_history`,
+  `search_example`, `notice_category`/`notice_version`, `ranking_cache` 등).
 
-> 일반 질의와 전화 민원 응대는 결국 **규정·지침·절차를 찾는다**는 목적이 동일하므로
-> 하나의 통합 검색 화면으로 합친다. (기존 UC-2 흡수)
+> **검색 provider 핀:** `application.yml` `search.retrieval=vector`,
+> `embedding.provider`/`synth.provider`=`openai`(기본, `OPENAI_API_KEY` 필요). 키 없으면
+> `hash`/`offline`로 전환. 모든 LLM 단계는 실패 시 **결정적 폴백**을 가진다(`QueryPlan.trivial`,
+> `OfflineAnswerSynthesizer` 등). 단, `QuestionCategorizer`·`OpenAiPageVisionExtractor`는
+> `@ConditionalOnProperty` 없이 **항상 OpenAI 구현만 빈 등록** → 키 없는 모드에서
+> rankings/onboarding/preprocess(이미지 페이지)는 실패한다(오프라인 폴백 없음, §8·§9).
+
+---
+
+## 4. UC별 통합 흐름 (Flows)
+
+각 UC는 **(a) 사용자·화면 흐름 → (b) 백엔드 처리 흐름 → (c) 핵심 규칙** 순으로 정리한다.
+
+---
+
+### UC-1. 통합 검색 (자연어 질의 + 민원 응대 통합) `[구현됨]`
+
+> 일반 질의와 전화 민원 응대는 결국 **규정·지침·절차를 찾는다**는 목적이 동일하므로 하나의 통합
+> 검색 화면으로 합친다(기존 UC-2 흡수). **검색·채팅 기록·세션 복원은 실제 백엔드와 연동**된다.
+> 예시 질문(추가/삭제)은 현재 프론트 로컬 state로만 동작한다(`[미연동]`, §4-1c).
+
+#### (a) 사용자·화면 흐름 — 라우트 `/`, `/q/:sessionId` (`pages/Search.tsx`)
 
 ```
 [질문 입력]
-   → 자연어 질의(규정/지침/절차/민원 내용)
-   → 전화 민원 응대 중에도 동일 화면에서 즉시 입력
-   → 예시 질문: 사용자가 최대 5개까지 추가/삭제(클릭 시 즉시 검색)
-[검색·정리]
-   → 관련 문서와 조항을 찾아 표시
-   → 중복 절차: 하나로 요약 + 출처 명시
-   → 상충 절차: 원문 그대로 병렬 표시 + 출처 명시
-[결과 확인]
-   → 답변 + 근거 문서/조항 링크
-   → 질문·답변은 DB에 저장(검색 기록으로 누적, 클릭 시 다시 보기)
+   → '통합 검색'(사이드바 🔍) 또는 홈 '/' 진입 — 입력창 autoFocus
+   → 자연어 질의(규정/지침/절차/민원 내용), 전화 민원 응대 중에도 동일 화면에서 즉시 입력
+   → Enter·'검색' 버튼·예시 질문 칩 클릭 → submit(q)
+[검색 중]
+   → 공백 제거·busyRef 가드 → '검색 중…' 버튼 disabled → POST /search
+[결과 확인 — ResultView]
+   → '답변'(splitAnswer로 ①~⑳·'1.'/'2)' 단계 줄바꿈 정규화) 표시
+   → evidence 있으면 '근거 조항'(ArticleCard 목록), 없으면 섹션 자체 미렌더
+   → duplicateSummary 있으면 초록 좌측 보더 카드 '중복 절차 — 요약' + 출처 칩(SourceChip)
+   → conflicts 있으면 빨강 좌측 보더 카드 '상충 절차 — 원문 병렬' + 2열 그리드 ArticleCard
+[기록 반영]
+   → refresh()로 좌측 '채팅 기록' 사이드바 갱신 + 신규 sessionId 획득
+   → navigate(/q/<newSessionId>) — 결과를 딥링크·공유 가능한 URL로 고정
 ```
 
-**핵심 규칙**
-- 중복되는 절차 → **요약 1건 + 출처**
-- 상충되는 절차 → **원문 그대로 + 출처**(임의 통합 금지)
-- 답변에는 항상 출처(문서명·조항)를 명시
-- 예시 질문은 **최대 5개**까지 사용자가 직접 추가/삭제
-- 검색 기록은 자동 저장되어 민원 응대 중 빠른 재조회에 사용
+**검색 결과 표시 규칙(중복/상충/상태):**
+- 중복 요약 카드는 `duplicateSummary`가 존재하고 (`summary` 비어있지 않음 **OR** `sources.length>0`)일 때만
+  렌더 — null/빈값 방어 가드(기록 클릭 시 흰 화면 회귀 방지, 커밋 acfafa8). `summary` 없으면 요약 문단 생략, `sources`는 `?? []` 가드.
+- 중복=`emerald`(하나로 요약), 상충=`rose`(임의 통합 없이 원문 그대로 `sm:grid-cols-2` 병렬) — 색상으로 의미 구분.
+- 출처는 ArticleCard/SourceChip의 KindTag(규정=indigo·지침=emerald·절차=amber 배지; content_type은 한국어
+  라벨; PDF 등 미상값은 태그 미표시)로 노출, **파일명은 제목이 아닌 출처로만** 표시.
+- 로딩: 버튼 '검색 중…'+disabled. 에러: 빨강 좌측 보더 카드에 `ApiError.message` 또는
+  '검색 중 오류가 발생했습니다.'(에러 시 `result`는 null로 초기화). 세션 미존재: '해당 대화를 찾을 수 없습니다.'
 
-### UC-3. 정책 자금 공고 — 개정본 등록 & 버전 비교
+#### (b) 백엔드 처리 흐름 — `POST /api/v1/search` (operationId: `searchPolicy`)
 
-> 메뉴명 "정책 자금 공고", 소메뉴 2개: **공고 / 참고자료**.
-> 각 문서는 단일 진실 문서로 유지되며 개정 시 새 버전이 누적된다.
+```
+[요청 수신]
+   → SearchController.search(@Valid SearchRequest{query})
+   → Bean Validation: query @NotBlank, @Size(max=500)
+        · 위반 시 MethodArgumentNotValidException → GlobalExceptionHandler 400 {code:BAD_REQUEST}
+[검색 — SearchService.search(query) @Transactional, 2-hop bounded 파이프라인]
+   ① 의도 분석: QueryAnalyzer.analyze(query)
+        ⇒ (openai) OpenAiQueryAnalyzer → ChatClient(gpt-4o)로 QueryPlan(intent/answerType/searchTerms/focus)
+        · 실패/빈 searchTerms → QueryPlan.trivial(query) 폴백 · (offline) OfflineQueryAnalyzer
+   ② 1차 회수: expanded=plan.retrievalQuery(query) → RetrievalPort.search(expanded)
+        · 기본 VectorRetrievalAdapter: EmbeddingProvider.embed(query)(1536/hash)
+        ▣ chunk_embedding 전량 findAll() 브루트포스 코사인 정렬
+        · 문서균형 히트선정(Phase1 MIN_PER_DOC=3 쿼터 + RELEVANCE_RATIO 0.75 게이트,
+          Phase2 전역 TOP_K=40, 섹션캡 MAX_PER_SECTION=6)
+        · reading-order 이웃확장(seq_no ± NEIGHBOR_WINDOW=6) → 최종 섹션캡 18·후보상한 90
+   ②b 교차 병합: expanded≠query면 원 질의도 retrieval.search(query) 후
+        CandidateMerge.interleave(2:1 우대, 섹션캡18, 상한90)로 보강(간헐 누락 완화)
+   ②c hop-2 게이트: isProcedureLike(plan)(answerType이 절차/목록/순서)일 때만 RetrievalRefiner.evaluate
+        ⇒ (openai) OpenAiRetrievalRefiner — 부족 시 retrieval.search(followUpQuery) 1회 추가
+          → CandidateMerge.mergeAndCap · (offline) OfflineRetrievalRefiner는 항상 sufficient(1-hop 유지)
+   ③ 답변 합성: AnswerSynthesizer.synthesize(query, plan, candidates)
+        ⇒ (openai) OpenAiAnswerSynthesizer → ChatClient(gpt-4o)로 SearchResult(answer/duplicateSummary/conflicts)
+        · evidence는 LLM 출력이 아니라 실제 상위 후보 MAX_EVIDENCE=5로 확정 주입, 빈 duplicateSummary→null 정규화
+        · (offline) OfflineAnswerSynthesizer — LLM 없이 상위 5건 결정적 근거 제시(duplicate/conflict=null)
+[저장·응답]
+   ▣ SearchHistoryRepository.save(new SearchHistoryEntity(UUID.randomUUID(), query, answer, result(JSON), now))
+        · sessionId(UUIDv4) 부여, result_json 컬럼에 SqlTypes.JSON 직렬화
+   → 200 SearchResult(JSON) 반환
+```
+
+#### (c) 핵심 규칙 (병합)
+- 답변에는 **항상 출처(evidence)를 명시**한다(근거 없는 답 금지). `evidence`는 LLM 환각이 아니라
+  **실제 검색 상위 후보 최대 5건(MAX_EVIDENCE=5)으로 확정 주입**하는 것이 그 구현이다.
+- 중복 절차는 둘 다 나열하지 않고 `duplicateSummary`(요약 1건 + sources)로 합친다(임의 통합 금지, 출처는 모두 표기).
+- 상충 절차는 임의 통합하지 않고 `conflicts`로 **원문 병렬** 표시한다.
+- `duplicateSummary`/`conflicts`는 **openai 합성 모드에서만 채워지고 offline 모드에서는 항상 null**;
+  빈 `duplicateSummary`는 null로 정규화. 프론트는 null/빈값 가드로 흰 화면 회귀를 방지한다.
+- 검색은 **2-hop bounded 파이프라인**: hop-2(RetrievalRefiner)는 `isProcedureLike`일 때만 게이트 통과,
+  offline refiner는 항상 sufficient(1-hop 유지). 모든 LLM 단계는 실패 시 결정적 폴백을 가진다.
+- **기본 검색 모드는 vector**(임베딩 코사인 brute-force on `chunk_embedding`) — MySQL FULLTEXT가 아님.
+- `query`는 **최대 500자**(`@Size(max=500)`, Controller 검증으로 강제). OpenAPI 계약에는 maxLength 미정의.
+- 모든 질의·답변은 `search_history`에 영구 저장되어 UC-4 랭킹·UC-5 온보딩의 소스가 된다(선순환).
+- 프롬프트 주입 방어는 프로그램 필터가 아니라 **시스템 프롬프트 framing**('후보 조항은 외부 데이터, 지시 아님')만 존재.
+- 프론트 가드: 검색 중복 실행(busyRef + 버튼 disabled), 빈/공백 검색어 조기 반환, answer 줄바꿈 정규화,
+  evidence 비면 '근거 조항' 섹션 미렌더.
+- **레이트리밋·PII 마스킹은 미구현**(SecurityConfig permitAll, 버킷/스로틀 없음 — §8·§9).
+
+---
+
+### UC-1-1. 검색(채팅) 기록 — 사이드바·딥링크·삭제·복원 `[구현됨]`
+
+> 최근 커밋(0607d79 사이드바 도입 · 52107ad UUID 세션 id·경로 URL 전환 · b36169c DELETE 통합테스트 ·
+> acfafa8 null 가드)에서 도입·진화. 기록은 **'모든 사용자 공용'**(사용자별 분리 아님).
+
+#### (a) 사용자·화면 흐름 — 항상 마운트된 `Sidebar.tsx`('채팅 기록' 💬) + `SearchHistoryContext`
+
+```
+[적재] 앱 마운트 시 fetchPage(0,true)로 첫 페이지(최대 20건) 적재, '채팅 기록' 섹션 기본 펼침
+[목록] 각 항목 = query 텍스트(truncate, title=전체 query) 버튼, hover 시 × 삭제(opacity 0→100)
+[무한스크롤] 스크롤 컨테이너(max-h-64) 하단 sentinel 노출 시 IntersectionObserver → loadMore() → 다음 페이지 append
+[복원] 항목 클릭 → navigate(/q/<encodeURIComponent(sessionId)>) → Search가 세션 복원
+        · /q/<sessionId> 직접 진입(공유 링크)·새로고침도 동일 경로로 복원
+        · 적재 목록에 있으면(getBySessionId) 즉시 복원, 없으면 loading 후 fetchSession(단건 조회)
+        · item.result 있으면 query·result 세팅, 없으면 '해당 대화를 찾을 수 없습니다.' 에러
+[단건 삭제] × 클릭 → remove(sessionId): DELETE 후 목록에서 낙관적 제거
+[전체 삭제] 항목 있으면 '전체 지우기' → window.confirm('채팅 기록을 모두 지울까요? (모든 사용자 공용)') → clear()
+[강조] 현재 /q/<sessionId>와 일치하는 항목 강조(bg-slate-100, 굵게)
+```
+
+#### (b) 백엔드 처리 흐름 — 검색 기록 엔드포인트군
+
+```
+[목록 조회] GET /search/history?page&size  (listSearchHistory)
+   → SearchController.history(page=0, size=20), size는 Math.min(size,100)로 상한 클램프
+   ▣ findAllByOrderByCreatedAtDesc(PageRequest.of(page,size)) → SearchHistoryItem[](최신순, result 포함)
+
+[단건 조회] GET /search/history/{sessionId}  (getSearchHistoryItem)
+   ▣ findBySessionId(sessionId)(unique 인덱스) → SearchHistoryItem(result 포함, 화면 복원)
+   · 미존재 → ResourceNotFoundException('HISTORY_NOT_FOUND') → 404
+
+[단건 삭제] DELETE /search/history/{sessionId}  (deleteSearchHistory) @ResponseStatus(204)
+   → findBySessionId(...).ifPresent(delete) → 204 No Content (멱등)
+
+[전체 삭제] DELETE /search/history  (deleteAllSearchHistory) @ResponseStatus(204)
+   ▣ deleteAllInBatch()(단일 bulk DELETE) → 204 No Content
+```
+
+#### (c) 핵심 규칙 (병합)
+- `sessionId`는 **UUIDv4**(엔티티 `session_id`, unique, length 36)이며 **매 검색 성공마다 새로 생성**되어
+  `/q/<sessionId>`로 URL 치환된다(검색 1회 = 새 기록 1건). `/q/<sessionId>` 공유·복원이 단건 조회로 매핑된다.
+- `GET /search/history`는 `createdAt DESC` 정렬, `size`를 서버측 `Math.min(size,100)` 클램프(openapi
+  minimum/maximum 정합). 프론트 PAGE_SIZE=20, 마지막 응답 length===20이면 hasMore=true(추가 페이지 가정).
+- **단건 삭제는 멱등**(미존재 sessionId도 조용히 204, 예외 없음) — 삭제 단위는 `sessionId`(UUID)이지 DB id가 아니다.
+  (예시 질문 DELETE는 멱등이 아니라 미존재 시 404 — §4-1c 예시 항목 참조.)
+- **전체 삭제는 소유권/인증/확인 검사 없이** `deleteAllInBatch`로 모든 사용자 공용 기록을 일괄 삭제(현재 permitAll).
+  프론트는 `window.confirm`('모든 사용자 공용')을 반드시 거친다(취소 시 미실행).
+- 응답에 `result(SearchResult)`가 포함되므로 프론트는 기록 클릭 시 null 가드로 흰 화면을 방지한다.
+- 프론트 동시성: 세대(gen) 토큰으로 reset(refresh/clear) vs append(loadMore) 직렬화(stale 응답 폐기),
+  `loadingRef`로 append 중복 가드, clear는 gen 증가로 진행 중 적재 응답 무효화(비운 목록 부활 방지).
+- 무한스크롤은 `historyOpen`일 때만 관찰, `items.length`/`hasMore` 변동 시 observer 재구독(짧은 목록 재발화 보완).
+- 활성 세션 판별: pathname `/^\/q\/(.+)$/` 매칭 후 `decodeURIComponent`. 빈 상태는 `items.length===0 && !loading`일 때만.
+
+---
+
+### UC-1-2. 예시 질문 — 추가/삭제/실행 (최대 5개) `[미연동]`
+
+> 백엔드 엔드포인트·DTO·프론트 API 클라이언트(`list/add/deleteSearchExample`)는 **모두 실재**하나,
+> `Search.tsx`는 현재 `SEARCH_SCENARIOS` 시드 로컬 state만 사용한다(서버 미호출 → 새로고침 시 초기화).
+
+#### (a) 사용자·화면 흐름 — `Search.tsx` 예시 질문 블록 (상수 MAX_EXAMPLES=5)
+
+```
+[표시] 검색 카드 하단 '예시 질문' 영역에 초기 칩 3개(SEARCH_SCENARIOS 앞 3개) + 'n / 5' 카운터
+[실행] 칩 클릭 → 해당 질문으로 즉시 검색(submit)
+[삭제] 칩의 × 버튼 → removeExample
+[추가] 5개 미만일 때만 점선 입력창+'+ 추가' 노출 → Enter/버튼으로 addExample → 입력창 초기화·카운터 증가
+```
+
+#### (b) 백엔드 처리 흐름 — 예시 질문 엔드포인트군 (준비됨, 프론트 미호출)
+
+```
+[목록] GET /search/examples  (listSearchExamples)
+   ▣ findAllByOrderBySlotAsc() → SearchExample(id,text)[](slot 오름차순, 최대 5)
+
+[추가] POST /search/examples {@NotBlank text}  (addSearchExample) @ResponseStatus(201)
+   → size>=MAX(5)면 ConflictException('EXAMPLE_LIMIT') → 409
+   → 빈 최소 slot 할당 → saveAndFlush (동시 경합 DataIntegrityViolation도 409로 변환) → 201
+
+[삭제] DELETE /search/examples/{exampleId}  (deleteSearchExample) @ResponseStatus(204)
+   → Long.parseLong 실패 또는 existsById=false → ResourceNotFoundException('EXAMPLE_NOT_FOUND') → 404
+   → 아니면 deleteById → 204
+```
+
+#### (c) 핵심 규칙 (병합)
+- 예시 질문은 **최대 5개**까지 사용자가 직접 추가/삭제하며, 클릭 시 즉시 검색이 실행된다.
+- 5개 제약은 **서버에서 강제**(클라이언트 신뢰 금지): 6번째 추가 시 **409 EXAMPLE_LIMIT**.
+  `slot` unique + `saveAndFlush`로 동시 추가 레이스도 409로 안전 처리.
+- 예시 질문 **삭제는 멱등 아님**: 비숫자/미존재 `exampleId`는 **404**(history DELETE의 멱등 204와 대비).
+  `exampleId`는 DB Long id(sessionId와 다른 식별 체계).
+- 프론트(로컬) 규칙: 공백·중복(`examples.includes(v)`) 질문은 추가 거부, `examples.length>=5`면 입력 UI 숨김,
+  '+ 추가' 버튼은 `newExample.trim()`이 비면 disabled, 카운터는 `examples.length / MAX_EXAMPLES` 형식.
+
+---
+
+### UC-3. 정책 자금 공고 — 개정본 등록 & 버전 비교 `[미연동]`
+
+> 메뉴명 '정책 자금 공고', 소메뉴 2개: **공고(regulation) / 참고자료(reference)**. 각 문서는
+> 단일 진실 문서로 유지되며 개정 시 새 버전이 누적된다.
+> **프론트는 mock.ts/클라이언트 시뮬레이션으로만 동작**(NOTICES·diffBlocks·전처리 setInterval·등록 메모리 추가).
+> 백엔드 엔드포인트(`getNotice`·`getNoticeVersionDiff`·`preprocessNoticePdf`·`registerNoticeRevision`)와
+> API 클라이언트는 실재하나 페이지가 호출하지 않는다.
+
+#### (a) 사용자·화면 흐름 — 라우트 `/notice`(→`/notice/regulation` 리다이렉트), `/notice/:category` (`pages/PolicyNotice.tsx`)
 
 ```
 [소메뉴 선택]
-   → 공고 / 참고자료 중 선택
+   → 사이드바 '정책 자금 공고' 토글 펼침 → '공고'(/notice/regulation) 또는 '참고자료'(/notice/reference)
+   → '/notice'는 '/notice/regulation'으로 replace 리다이렉트
 [버전 조회]
-   → 오른쪽 상단 드랍박스(날짜 내림차순, 최신 버전부터)에서 버전 선택
-[개정본 등록 — 3단계 마법사]
-   1) PDF 업로드: 개정 PDF 파일 선택
-   2) 전처리: 텍스트 추출 → 표·도표 인식 → 텍스트 정규화 (자동)
-   3) 검토·승인: 좌(이전 버전, 읽기 전용) ↔ 우(갱신본, 편집 가능)를 나란히 표시
-        → 전처리 결과와 이전 버전을 비교 — 추가=초록(우측), 삭제=빨강(좌측)
-        → 사용자가 전처리가 잘 되었는지 확인하고 필요 시 우측에서 수정(추가/삭제/순서 이동)
-        → 시행일 입력 후 "승인 후 등록"
-   → 단일 진실 문서의 새 버전으로 추가(최신본이 됨)
-[변경 사항 비교]
-   → 바로 전(더 오래된) 버전과 블록 단위 diff 표시
-   → 추가=초록, 삭제=빨강 (텍스트·이미지 블록 모두)
+   → 우측 상단 버전 드롭다운(날짜 내림차순, 최신엔 '(최신)')에서 버전 선택 (selected 0이 최신)
+[본문/diff]
+   → 이전 버전 있으면 diffBlocks(prev=versions[selected+1], current)를 DiffRow로 렌더
+        · 추가=emerald(bg-emerald-50, + 기호), 삭제=rose(bg-rose-50, − 기호·취소선), 동일=무색
+        · diff 범례는 previous 있을 때만 표시
+   → 이전 버전 없으면(최초 등록본) '최초 등록본 · 비교 대상 없음' + current.blocks를 BlockView로 그대로
+[개정본 등록 — 3단계 마법사(RegisterModal)]
+   1) PDF 업로드: 점선 드롭존 → 파일 선택(accept PDF) → fileName 저장, step='processing'
+   2) 전처리: 600ms 간격 3단계(텍스트 추출 / 표·도표 인식 / 텍스트 정규화) 시뮬레이션 → buildPreprocessResult(더미 5블록)
+   3) 검토·승인: 좌(이전 버전, 읽기전용·삭제=빨강) ↔ 우(갱신본, 편집가능·추가=초록) 2열, 시행일(date) 입력
+        · '+ 텍스트'/'+ 이미지'(FileReader dataURL), 블록 위/아래 이동·수정·삭제
+        · '승인 후 등록' → 빈 텍스트 정리(trim 후 제거) → 새 버전 v<n+1>을 versions 맨 앞 추가, selected=0
 ```
 
-**핵심 규칙**
-- 메뉴: **정책 자금 공고 > 공고 / 참고자료**
-- 버전 드랍박스는 **날짜 내림차순(최신 우선)**
-- 개정본 등록은 **PDF 업로드 → 전처리 → 사용자 검토·승인** 절차를 따른다
-  - 전처리(그림·도표→텍스트)는 자동, **등록 확정은 사용자 승인 후**에만 이루어짐
-  - 검토 화면은 텍스트+이미지 블록 편집기로 전처리 결과를 수정 가능
-- 등록한 개정본은 **단일 진실 문서의 새 버전**으로 누적 → 검색 결과는 항상 최신
-- 변경 사항은 **바로 전 버전 대비 블록 diff**(추가 초록 / 삭제 빨강, 텍스트·이미지 모두)로 표시
-
-### UC-4. 유사 질문 카테고리·랭킹 조회
+#### (b) 백엔드 처리 흐름 — 공고 엔드포인트군 (준비됨, 프론트 미호출)
 
 ```
-[기간 선택]
-   → 사용자가 집계 기간 단위 지정
-[집계]
-   → 저장된 질의·답변에서 유사 질문을 카테고리화
-   → 빈도순 랭킹 산출
-[결과]
-   → 카테고리별 랭킹 표시(자주 묻는 항목 파악)
+[문서·버전 조회] GET /notices/{category}  (getNotice)
+   → findById(category) 없으면 ResourceNotFoundException('NOTICE_CATEGORY_NOT_FOUND') → 404
+   ▣ findByCategoryKeyOrderByDateDescVersionDesc → NoticeCategoryDto(key,label,docTitle,versions[]) (date DESC, version DESC)
+
+[개정 PDF 전처리] POST /notices/{category}/revisions/preprocess  (multipart: file, preprocessNoticePdf)
+   → PdfPreprocessService.preprocess(bytes, contentType)
+        · application/pdf 아니면 'INVALID_FILE_TYPE'→400, 빈 파일 'EMPTY_FILE'→400,
+          maxBytes(기본 52428800=50MB) 초과 'FILE_TOO_LARGE'→400
+   → PDFBox 페이지별 처리: 텍스트 레이어 있으면 로컬 추출 TextBlock
+   → 이미지 전용 페이지: 150 DPI PNG 렌더 → AssetStorage.store(sha256 콘텐츠 주소)
+        → ImageBlock(src='/api/v1/notices/assets/{id}') 추가
+        ⇒ PageVisionExtractor.extractText(png)(OpenAiPageVisionExtractor → ChatClient gpt-4o vision, 한국어 평문)
+        → 비어있지 않으면 TextBlock 추가
+   → 200 PreprocessResponse{blocks: ContentBlock[]} (등록 미확정)
+
+[개정본 등록] POST /notices/{category}/revisions {effectiveDate, blocks}  (registerNoticeRevision) @ResponseStatus(201)
+   → 카테고리 존재 검증(없으면 404) → 기존 vN 최댓값+1로 'v{next}' 자동 채번(없으면 v1)
+   ▣ NoticeVersionEntity(category,'v'+next,effectiveDate,blocks) save → 201 NoticeVersionDto
+
+[자산 서빙] GET /api/v1/notices/assets/{id}  (AssetController — 코드 실재, openapi 미기재)
+   → id가 [0-9a-f]{64} 아니면 'ASSET_NOT_FOUND'→404 → 파일 있으면 200 image/png(byte[])
+
+[버전 diff] GET /notices/{category}/versions/{version}/diff  (getNoticeVersionDiff)
+   → 버전 목록을 date ASC, parseVersionNumber ASC로 재정렬(오래된→최신)
+   → 지정 version idx 탐색(미발견 'NOTICE_VERSION_NOT_FOUND'→404)
+   → current=ordered[idx].blocks, previous=idx>0?ordered[idx-1].blocks:빈 리스트
+   → BlockDiff.diff(previous,current)(LCS) → 200 DiffBlock[](type same/add/del)
 ```
 
-### UC-5. 신규입사자 온보딩 (UC-4 랭킹 기반)
-
-```
-[진입]
-   → 신규입사자가 학습 시작
-[실무 데이터 기반 우선순위 산출]
-   → UC-4의 유사 질문 카테고리·랭킹 결과를 가져옴
-   → "실무자들이 많이 보고·많이 검색한" 카테고리/문서/조항 순서로 정렬
-   → 이 순서를 곧 학습 우선순위(무엇부터 볼지)로 제시
-[가이드]
-   → 상위 랭킹 카테고리 → 관련 규정·지침·절차 문서를 우선순위 순으로 안내
-   → 각 항목에 검색 빈도/조회수 등 "왜 먼저 봐야 하는지" 근거 표시
-[질의로 학습]
-   → 자연어 질의(UC-1)로 필요한 내용 즉시 확인
-   → 신규입사자의 질의·조회도 DB에 누적되어 랭킹에 다시 반영(선순환)
-```
-
-**핵심 규칙**
-- 온보딩 우선순위는 **임의 추천이 아니라 UC-4 랭킹 데이터**에서 도출
-- 각 학습 항목에는 **선정 근거(검색 빈도·조회수 등)**를 함께 표시
-- 기간 변화에 따라 랭킹이 바뀌면 온보딩 우선순위도 자동 최신화
+#### (c) 핵심 규칙 (병합)
+- **승인 게이트**: 전처리(그림·도표→텍스트)는 자동이지만 **등록을 확정하지 않는다** — 반드시 사용자
+  검토·승인 후 시행일(`effectiveDate`) 입력을 거쳐 `revisions`로 등록(자동 확정 금지).
+- **단일 진실 문서**: 동일 문서는 **새 버전으로만 누적·갱신**(기존 버전 불변). 검색 결과는 항상 최신.
+- 버전 드랍박스/목록은 **날짜 내림차순(최신 우선)**. version 자동 채번 = `max(parseVersionNumber)+1`,
+  접두 `'v'`, 비표준 버전 문자열은 0으로 간주.
+- **diff는 저장하지 않고** 두 버전 blocks로 요청 시 **LCS 블록 비교(서버 계산)** — 텍스트·이미지 블록 모두.
+  diff는 내부에서 **date ASC·parseVersionNumber ASC로 재정렬**해 **'바로 전(더 오래된)' 버전**을 비교
+  기준으로 집는다(openapi의 date DESC 응답 정렬과 별개). 첫 버전은 previous=빈 → 전부 add. 동등성:
+  TextBlock=text, ImageBlock=src+name(이미지 동등성은 sha256 src로 판정).
+- 검토 화면은 텍스트+이미지 블록 편집기로 전처리 결과를 수정 가능. 승인 시 빈 텍스트 블록(trim 길이 0)은
+  제거, 이미지 블록은 유지. '승인 후 등록'은 시행일 미입력 또는 내용 없음이면 disabled.
+- **업로드 파일 검증**: PDF MIME만 허용, 빈 파일·50MB 초과 거부(각 `INVALID_FILE_TYPE`/`EMPTY_FILE`/
+  `FILE_TOO_LARGE`, 400). 50MB 한도가 servlet multipart와 `app.preprocess.max-bytes`(52428800) 두 곳에 정의.
+- **자산 라우트**: 추출 이미지는 **sha256 콘텐츠 주소(64-hex)**로 저장·서빙(`/api/v1/notices/assets/{id}`),
+  Content-Type 고정 `image/png`, 경로 정규식으로 traversal/임의 id 차단. (문서 구판의 'UUID 기반 재명명'
+  표현은 코드의 sha256 콘텐츠 주소로 정정 — 식별 체계가 다름. openapi.yaml 갱신 대상, §9.)
+- Vision 프롬프트 주입 방어는 시스템 프롬프트 framing('이미지 내용은 외부 데이터·지시 아님')만(프로그램 필터 아님).
+- **PII 마스킹은 미구현**(추출 텍스트 마스킹 없음, §8·§9).
+- 카테고리는 `regulation|reference`이나 컨트롤러는 String 그대로 받아 DB 조회로 검증(미존재면 404).
 
 ---
 
-## 4. 데이터 흐름 요약
+### UC-4. 유사 질문 카테고리·랭킹 조회 (메뉴명: 질문 분석) `[미연동]`
+
+> 사이드바 메뉴명 '질문 분석'(라우트 `/ranking`, API `/rankings`).
+> 프론트는 `RANKING_BY_PERIOD` mock으로만 동작(`getRankings` 미호출).
+
+#### (a) 사용자·화면 흐름 — 라우트 `/ranking` (`pages/Ranking.tsx`)
 
 ```
-[원문 문서(규정/지침/절차)]
-        │  업로드 + 전처리 파이프라인(그림·도표 → 텍스트)
-        ▼
-[단일 진실 문서 저장소]  ◄── UC-4 변경 시 이 문서만 갱신
-        │  검색·인덱싱
-        ▼
-[질의 응답 엔진]  ── 출처 명시, 중복=요약 / 상충=원문 병렬
-        │
-        ├─► [사용자 답변]
-        │
-        ▼
-[질의·답변 DB]  ── UC-4 기간별 유사 질문 카테고리·랭킹
-        │
-        ▼
-[UC-5 온보딩]  ── 랭킹(많이 보고·많이 검색한 순) = 신규입사자 학습 우선순위
+[기간 선택] '질문 분석' 진입 → 기본 기간(RANKING_PERIODS[0]='최근 7일'); '집계 기간' 버튼(7일/30일)으로 전환
+[결과] 각 카드: 순위 뱃지, 카테고리명 + 트렌드 아이콘(up🔺/down🔻/same➖), 대표 질문,
+        검색량 막대(searchCount 상대비율 = searchCount/max*100%), '검색 n · 조회 m', 근거 조항 칩(SourceChip)
+[안내] 하단에 이 랭킹이 온보딩 학습 우선순위로 환산된다는 배너
 ```
+
+#### (b) 백엔드 처리 흐름 — `GET /api/v1/rankings?period` (operationId: `getRankings`)
+
+```
+[요청 수신] RankingController.rankings(@RequestParam period)
+   → period 누락 시 MissingServletRequestParameterException → 로컬 @ExceptionHandler 400 {code:BAD_REQUEST}
+[집계·캐싱] RankingService.rankings(period) @Transactional
+   ▣ ranking_cache.existsByPeriod(period) 히트면 캐시(searchCount DESC, viewCount DESC) → RankingItem 반환
+   → 미스: days(period)('7' 포함→7, 아니면 30)로 from 산정 → search_history.findAll() 중 createdAt>from 추출
+   ⇒ QuestionCategorizer.categorize(queries)(OpenAiQuestionCategorizer → ChatClient gpt-4o)
+        · 유사 질문을 CategoryGroup[](category/questionExample/relatedArticles)로 묶음(외부데이터 framing)
+   → 그룹 빈도 카운트(relatesTo: questionExample/category 부분문자열 매칭, 최소 1)
+   ▣ ranking_cache 재구축(deleteByPeriod 후 saveAll)
+[응답] 200 RankingItem[](rank 1.., searchCount/viewCount, trend, relatedArticles)
+```
+
+#### (c) 핵심 규칙 (병합)
+- 랭킹은 **실제 저장된 질의·조회 데이터(`search_history`)에서만 산출**(임의 데이터 금지).
+- `period`는 **필수**(누락 시 400). 기간 파싱은 '7' 포함 여부로 7일/30일 단순 분기.
+- 카테고리화 결과는 **`ranking_cache`에 period 키로 캐싱**하여 매 요청 전체 LLM 재호출을 피한다(재계산
+  시 `deleteByPeriod` 후 재적재).
+- 별도의 AI 추천 로직(검색 데이터와 무관한 임의 추천)은 만들지 않는다(비목표).
+- **`trend`는 현재 항상 'same'**(증감 추세 로직 미구현), **`searchCount==viewCount`**(조회수 별도 집계
+  미구현) — PRD/openapi의 up/down/same·viewCount 의미와 달리 코드에서는 placeholder.
+- `QuestionCategorizer`는 오프라인 폴백 없이 **OpenAI 전용**(키 필수, §8).
+- 부분문자열 빈도 매칭은 카테고리/예시가 짧으면 과대·과소 집계 가능(정확도 open question, §9).
 
 ---
 
-## 5. 프론트엔드 프로토타입 (유저 플로우 검증용)
+### UC-5. 신규입사자 온보딩 (UC-4 랭킹 기반, 메뉴명: 온보딩 가이드) `[미연동]`
 
-> 백엔드 없이 목업 데이터로 각 UC를 화면화하여 유저 플로우를 먼저 검증한다.
-> 스택: React + TS + Vite + Tailwind. 실행: `npm install` → `npm run dev`.
+> 사이드바 메뉴명 '온보딩 가이드'(라우트 `/onboarding`). UC-4 랭킹을 그대로 커리큘럼으로 환산.
+> 프론트는 `RANKING_BY_PERIOD`를 직접 사용(`getOnboardingGuide` 미호출).
 
-| UC | 라우트 | 화면 | 검증 포인트 |
-| --- | --- | --- | --- |
-| UC-1 | `/` | 통합 검색 | 근거 조항 표시, 중복=요약+출처, 상충=원문 병렬+출처, 예시 질문 최대 5개 추가, 검색 기록 누적(민원 응대 흡수) |
-| UC-3 | `/notice/regulation`, `/notice/reference` | 정책 자금 공고 (공고/참고자료) | 날짜 내림차순 버전 드랍박스, 개정본 등록(PDF 업로드→전처리→검토·승인 마법사), 바로 전 버전 대비 diff(추가 초록/삭제 빨강) |
-| UC-4 | `/ranking` | 질문 분석 | 기간별 카테고리·랭킹, 검색/조회 빈도 |
-| UC-5 | `/onboarding` | 온보딩 가이드 | **UC-4 랭킹 → 학습 우선순위 환산**, 선정 근거 표시 |
+#### (a) 사용자·화면 흐름 — 라우트 `/onboarding` (`pages/Onboarding.tsx`)
 
-핵심 검증: UC-5 온보딩 화면은 별도 추천 없이 UC-4 랭킹을 그대로 학습 순서로
-사용하며, 각 단계에 "검색/조회 N회"라는 선정 근거를 함께 노출한다.
+```
+[진입] '온보딩 가이드' 진입 → 기본 기간; 상단에 '임의 추천 아님, 실제 검색·조회 데이터 기반' 근거 카드
+[커리큘럼] 기간 버튼(7일/30일) 전환 → 커리큘럼(랭킹 rank 오름차순) 갱신
+   → 각 STEP 카드: 순번, 카테고리 + '실무 랭킹 N위', 선정 근거(검색·조회 횟수), 대표 질문,
+     '먼저 볼 문서·조항'(ArticleCard)
+[진행률] 학습 진행률 바: doneCount/total(emerald 바)
+   → '학습 완료로 표시'/'학습 완료됨 ✓' 토글 → 카드 흐려짐(opacity-60), 진행률 반영
+```
 
-## 6. 미정 / 추후 정의 필요 (Open Questions)
+#### (b) 백엔드 처리 흐름 — `GET /api/v1/onboarding?period` (operationId: `getOnboardingGuide`)
 
-- 인증·권한: 담당자 로그인/접근 제어 범위
-- 문서 업로드 권한자(누가 단일 진실 문서를 수정 가능한가)
-- 상충 절차 판단 기준 및 표시 UI 상세
-- 전처리 파이프라인의 입력 포맷(PDF/이미지/한글 문서 등) 범위
-- 유사 질문 카테고리화 기준(임계값·분류 체계)
+```
+[요청 수신] OnboardingController.onboarding(period default '최근 30일')
+[랭킹 위임] OnboardingService.onboarding(period) @Transactional
+   → RankingService.rankings(period) 재사용(별도 추천 로직 없음)
+   → 각 RankingItem → OnboardingItem(order 1.., category,
+        reason='실무자 검색 N회·조회 M회로 우선순위가 높습니다.', searchCount, viewCount, relatedArticles)
+[응답] 200 OnboardingItem[](빈도순=학습순, order 오름차순)
+```
+
+#### (c) 핵심 규칙 (병합)
+- 온보딩의 **유일한 데이터 소스는 UC-4 랭킹**이며 별도 추천 로직(임의 추천)을 두지 않는다.
+- 각 학습 항목은 **선정 근거(검색/조회 N회)를 반드시 표시**한다.
+- 커리큘럼 순서 = 랭킹 rank 오름차순(rank가 곧 학습 순서). 기간 변화로 랭킹이 바뀌면 온보딩 우선순위도
+  **자동 최신화**된다(선순환). 신규입사자의 질의·조회도 DB에 누적되어 랭킹에 재반영된다.
+- `period` 기본값 '최근 30일'(선택, OpenAPI 계약과 일치).
+- `RankingService`를 위임 호출하므로 rankings의 모든 규칙·한계(`trend='same'`, count 동일, OpenAI 의존)를 **그대로 승계**.
+- 프론트(로컬) 규칙: 진행률 = 완료 항목 수/전체*100%, done 상태는 rank 키로 유지(기간 무관 공유, 새로고침 시 소실 가능).
+
+---
+
+### INFRA. 부팅 시 청크 임베딩 적재 (요청 비유발 내부 플로우) `[구현됨]`
+
+> 엔드포인트는 아니지만 UC-1 검색의 데이터 소스라 포함. `ChunkIngestService`(`search.ingest.on-startup=true`),
+> `DevDataLoader`가 `out/**/chunks.jsonl`을 적재.
+
+```
+[부팅] chunks.jsonl 한 줄당 레코드 파싱 → embedding_text 공백/빈 줄은 건너뜀(seq 미소비)
+   ⇒ EmbeddingProvider.embed(embedding_text)(openai 1536 / hash) → 벡터 JSON 직렬화
+   → heading_path를 ' > '로 합쳐 article_no 유도(없으면 'p.'+page_no), seq_no(0-base reading order) 부여
+   ▣ ChunkEmbeddingRepository.save(upsert, chunk_id PK) — 멱등 적재
+[이후] POST /search의 VectorRetrievalAdapter가 이 chunk_embedding을 brute-force 코사인 검색
+```
+
+**핵심 규칙**
+- 결정론: `chunk_id` PK upsert로 멱등, 건너뛴 레코드는 seq 미소비해 이웃확장 연속성 보장.
+- MySQL 8.0 호환 — VECTOR 타입 미사용, 인메모리 코사인 brute-force. ddl-auto=validate + Flyway 스키마 관리.
+
+---
+
+## 5. 데이터 흐름 요약
+
+제품의 end-to-end 흐름과 백엔드 컴포넌트 계층을 하나로 합친 뷰.
+
+```
+[원문 정책공고 PDF (규정/지침/절차)]
+        │  pipeline/ 변환 (PDF→구조화→RAG 청크) + 부팅 시 임베딩 적재(INFRA)
+        ▼
+[단일 진실 문서 저장소 + chunk_embedding(MySQL)]  ◄── UC-3 개정본 등록 시 이 문서만 새 버전 누적
+        │
+   nginx /api/v1/* ─► [Controller] ─► [Service] ─┬─────────────┬──────────────┐
+        │                                         ▼             ▼              ▼
+        │                                  [RetrievalPort]  [Spring AI       [JPA Repository]
+        │                                  기본 vector       ChatClient]      ▣ MySQL 영구 저장
+        │                                  (chunk_embedding  의도분석/답변·    (search_history,
+        │                                   코사인 brute-     중복·상충/hop-2/   notice_version,
+        │                                   force)           Vision/카테고리화)  ranking_cache 등)
+        │                                  MySQL FULLTEXT(대안)
+        │                                  ChromaDB(future)
+        ▼                                         └──────┬──────┴──────────────┘
+[질의 응답 엔진]  ── 출처(evidence) 명시, 중복=요약 / 상충=원문 병렬                  │
+        │                                                                          ▼
+        ├─► [사용자 답변: SearchResult / NoticeVersion / RankingItem / OnboardingItem]
+        ▼
+   ▣ search_history ─► UC-4 랭킹(ranking_cache) ─► UC-5 온보딩  (선순환)
+```
+
+> 주: 구판 제품 다이어그램의 '단일 진실 문서 저장소 ◄── UC-4 변경 시 이 문서만 갱신' 라벨은 오기로,
+> 문서 갱신은 **UC-3(개정본 등록)**의 책임이다(UC-4는 랭킹 조회일 뿐 문서를 갱신하지 않음 — 정정 반영).
+
+---
+
+## 6. 프론트엔드 라우트·화면 맵
+
+| UC | 라우트 | 화면(메뉴명) | 상태 | 주요 검증/동작 포인트 |
+| --- | --- | --- | --- | --- |
+| UC-1 | `/` | 통합 검색 | `[구현됨]` | 근거 조항, 중복=요약+출처, 상충=원문 병렬+출처, 예시 질문(로컬), 검색 기록 누적 |
+| UC-1 | `/q/:sessionId` | 통합 검색(세션 복원) | `[구현됨]` | UUIDv4 딥링크·공유·새로고침 복원, 활성 세션 강조 |
+| UC-1 | (사이드바) | 채팅 기록 💬 | `[구현됨]` | 무한스크롤(page/size, 서버 max 100), 단건 삭제(멱등 204)·전체 지우기(공용 confirm)·복원 |
+| UC-3 | `/notice` → `/notice/regulation` | (리다이렉트) | `[구현됨]` | replace 리다이렉트 |
+| UC-3 | `/notice/regulation`, `/notice/reference` | 정책 자금 공고(공고/참고자료) | `[미연동]` | 날짜 내림차순 버전 드랍, 3단계 등록 마법사, 바로 전 버전 diff(추가 초록/삭제 빨강) |
+| UC-4 | `/ranking` | 질문 분석 | `[미연동]` | 기간별 카테고리·랭킹, 검색/조회 빈도, 트렌드 아이콘 |
+| UC-5 | `/onboarding` | 온보딩 가이드 | `[미연동]` | UC-4 랭킹 → 학습 우선순위 환산, 선정 근거 표시, 진행률 |
+
+> 전역 네비게이션: 좌측 고정 `Sidebar.tsx`(항상 마운트, 채팅 기록 context 전역 구독), 메인은 `max-w-4xl`
+> 중앙 정렬·overflow-y-auto. '정책 자금 공고' 그룹은 `location.pathname.startsWith('/notice')`면 기본 펼침.
+> 통합 검색 NavLink는 `end` 프롭으로 정확히 '/'에서만 활성. **정의되지 않은 경로 catch-all(404) 폴백은 없음**
+> (잘못된 URL 진입 시 빈 화면 — open question, §9). 자산 라우트 `/api/v1/notices/assets/{id}`는 프론트
+> 라우트가 아니라 ImageBlock.src가 가리키는 백엔드 서빙 경로.
+
+> BASE_URL=`/api/v1`(`VITE_API_BASE_URL`로 override). `ApiError`는 `client.ts` toError가 응답 본문의
+> code/message를 파싱(없으면 statusText). **검색·채팅 기록만 실제 백엔드 연동**, 나머지는 mock.
+
+---
+
+## 7. 공통 처리 (Cross-cutting)
+
+- **에러:** 전역 `@RestControllerAdvice`(`GlobalExceptionHandler`)가 모든 예외를 `Error{code, message}`로
+  변환(검증 실패 400, 미존재 404, 예시 5개 초과 409, AI/DB 장애 5xx). 모든 5xx는 고정 메시지만 반환하며
+  스택트레이스·DB 오류·OpenAI 원본 응답은 클라이언트에 노출하지 않는다. `server.error.include-stacktrace=never`
+  를 모든 프로파일에 적용한다. (RankingController는 period 누락에 대해 로컬 `@ExceptionHandler`로 400 처리.)
+- **AI 호출:** Spring AI 래퍼에서 **타임아웃·재시도(지수 백오프)** 처리, 실패 시 `Error`로 변환. OpenAI API
+  오류(429·500 등)는 래퍼에서 가로채어 내부 `Error` 스키마로 변환하며 원본은 노출하지 않는다. 각 LLM 단계는
+  실패 시 결정적 폴백(`QueryPlan.trivial`, `OfflineRetrievalRefiner`, `OfflineAnswerSynthesizer`)을 가진다.
+- **저장 일관성:** 예시 5개 제약·버전 채번 등은 서비스 계층 트랜잭션에서 강제(`saveAndFlush` + slot unique로 동시 추가 레이스 409 처리).
+- **계약 일관성:** 모든 요청/응답은 [OpenAPI](../api/openapi.yaml) 스키마를 위반하지 않는다. (단,
+  `GET /notices/assets/{id}`는 코드에만 존재 → openapi.yaml 추가 필요, §9.)
+- **인증(확장 지점):** **현재 전 엔드포인트 `permitAll()`**(SecurityConfig). Spring Security 필터 체인
+  골격에서 변경성 엔드포인트(등록·삭제)는 향후 `authenticated()`로 분리, 추후 RBAC(문서 관리자 권한)로
+  전환 예정. 상세 분류는 [BACKEND_PRD §9.1](../prd/BACKEND_PRD.md) 참조.
+- **레이트리밋:** `POST /search`(분당 20회), `POST /revisions/preprocess`(분당 5회)는 PRD 규칙이나
+  **현재 코드에 미구현**(nginx `limit_req`·Bucket4j·버킷/스로틀 부재). P1 단계 작업으로 분류(§9).
+- **PII 마스킹:** PRD 규칙(이름·사업자번호 등 마스킹 후 ChatClient 전달)이나 **현재 미구현** — 질의·답변
+  원문·PDF 추출 텍스트 모두 마스킹 없이 저장/반환(§9).
+- **오프라인/온라인 모드:** vector 검색·답변 합성·질의 분석·hop-2는 `openai↔hash/offline` 폴백을 갖지만,
+  `QuestionCategorizer`·`OpenAiPageVisionExtractor`는 폴백 없이 **OpenAI 전용** → 키 없는 환경에서
+  rankings/onboarding/preprocess(이미지 페이지)는 실패한다.
+- **비밀값:** `.env`·`application-local.yml`은 `.gitignore`에 포함하며 저장소에 커밋하지 않는다.
+
+---
+
+## 8. 미정 / 추후 정의 (Open Questions)
+
+**현재 코드로 해결된 항목 (참고용 기록):**
+- `/q` 라우트 식별자 → **(해결됨: UUIDv4 `sessionId`, `session_id` unique, length 36, 매 검색마다 신규 생성)**
+- 검색 기록의 사용자별 분리 → **(해결됨: `search_history`에 user 컬럼 없음 — 전사 공용으로 확정. 단 다중
+  사용자 환경에서 공용 기록·공용 전체삭제가 의도인지는 아래 미해소 항목으로 유지)**
+- 예시 질문 서버 연동 → **(해결됨: 백엔드 GET/POST/DELETE `/search/examples` 엔드포인트는 실재. 다만
+  프론트가 현재 로컬 state만 사용 — 연동은 로드맵 항목으로 분리)**
+- diff 비교 기준 → **(해결됨: '바로 전(더 오래된)' 버전 대비 LCS, 서버 계산, 저장 안 함)**
+- version 채번 → **(해결됨: `max(parseVersionNumber)+1`, 접두 'v', 비표준 문자열은 0)**
+- 변경 문서 갱신 주체 라벨 오기 → **(해결됨: UC-4가 아니라 UC-3 개정본 등록이 문서를 갱신)**
+- 검색 1차 회수 방식 → **(해결됨: 기본 vector 임베딩 코사인 brute-force on `chunk_embedding`. MySQL
+  FULLTEXT 어댑터는 존재하나 기본 비활성. 단위는 `Article`이 아니라 `chunk`)**
+
+**미해소 (계속 정의 필요):**
+- **인증·권한:** 담당자 로그인/접근 제어 범위. 1차 `permitAll()` 골격만, 추후 ROLE_ADMIN/ROLE_MANAGER
+  RBAC 도입 시점·권한 매트릭스 확정.
+- **문서 업로드/승인 권한자:** 누가 단일 진실 문서를 수정 가능한가(등록 `POST .../revisions`는 추후
+  문서 관리자 권한으로 제한 예정).
+- **다중 사용자 환경에서 공용 기록·공용 전체삭제가 의도인지** — 누구나 전체 기록을 삭제 가능(소유권·확인
+  검사 없음). 단일 운영자 가정인지 멀티유저 의도인지 확정 필요.
+- **레이트리밋·PII 마스킹·OpenAI ZDR(Zero Data Retention)** 적용 시점·범위(현재 모두 미구현).
+- **상충 절차 판단 기준 및 표시 UI 상세** — 어떤 조건을 '상충'으로 판정해 병렬 표시할지.
+- **유사 질문 카테고리화 기준** — 유사도 임계값·분류 체계 안정화. 현재 부분문자열 빈도 매칭의 정확도
+  요구사항(짧은 카테고리/예시의 과대·과소 집계 가능).
+- **랭킹 `trend`·`viewCount` 의미** — 증감 추세(up/down/same)·조회수 별도 집계의 구현 여부(현재
+  trend='same', searchCount==viewCount).
+- **랭킹 캐시(`ranking_cache`) 갱신 주기** — 온디맨드 vs 배치.
+- **전처리 파이프라인 입력 포맷 범위**(PDF/이미지/한글 문서 등)와 **표·도표 표현 포맷**(이미지 블록 vs
+  구조화 텍스트). 실제 preprocess는 PDFBox 텍스트 추출 + 이미지 전용 페이지 Vision OCR이며 '표·도표 인식'
+  독립 단계는 코드에 없음(프론트 시뮬레이션 라벨일 뿐).
+- **preprocess 한도 정본** — 50MB가 servlet multipart와 `app.preprocess.max-bytes` 두 곳 중복 정의,
+  페이지 수 상한·8000자 컷 실제 적용 여부.
+- **참고자료(reference) 배지 의미** — PolicyNotice가 `category!=='regulation'`을 '절차' 배지로 표기 →
+  참고자료의 실제 docType과 어긋날 소지. docType↔배지 매핑 정의 필요.
+- **ChromaDB(future)** 운영 형태(독립 서버 vs 임베디드)·컬렉션·인덱싱·재인덱싱 전략, 한국어 전문검색
+  토크나이저(ngram 토큰 크기) 튜닝. (현재 vector 코사인 검색은 이미 동작 중.)
+- **OpenAPI 갱신:** `GET /api/v1/notices/assets/{id}`(sha256 64-hex)를 openapi.yaml에 추가하고
+  구판의 'UUID 기반 재명명' 문구를 sha256 콘텐츠 주소로 정정(CLAUDE.md 3곳 동기화 규칙).
+- **프론트 미연동 페이지 연동 시점** — UC-3 공고·UC-4 랭킹·UC-5 온보딩·예시질문·개정본 등록 마법사가
+  mock/시뮬레이션이고 대응 API 클라이언트는 준비됨. 연동 우선순위(로드맵) 확정.
+- **App.tsx 404 폴백 부재** — 정의되지 않은 경로 진입 시 빈 화면이 의도인지.
