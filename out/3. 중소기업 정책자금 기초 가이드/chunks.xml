@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<document id="d_1f3e4bcf49b9b15fba4aeae8caf569f480724ceae27795e2b19ce702110fb64d" file_name="3. 중소기업 정책자금 기초 가이드.pdf" source_sha256="1f3e4bcf49b9b15fba4aeae8caf569f480724ceae27795e2b19ce702110fb64d" pipeline_version="1.0.0" generated_at="2026-06-17T13:03:35.242792+00:00">
+<document id="d_1f3e4bcf49b9b15fba4aeae8caf569f480724ceae27795e2b19ce702110fb64d" file_name="3. 중소기업 정책자금 기초 가이드.pdf" source_sha256="1f3e4bcf49b9b15fba4aeae8caf569f480724ceae27795e2b19ce702110fb64d" pipeline_version="1.0.0" generated_at="2026-01-01T00:00:00+00:00">
   <chunk id="c_8fb1c850bd35aa57762fef16">
     <meta>
       <chunk_id>c_8fb1c850bd35aa57762fef16</chunk_id>
@@ -12,7 +12,7 @@
       <extract_method>layout_analysis</extract_method>
       <confidence>0.300</confidence>
       <bbox page="1" x0="-0.0" y0="-0.0" x1="595.2" y1="841.9"/>
-      <next_chunk_id>c_2b59463c79affd06b555748b</next_chunk_id>
+      <next_chunk_id>c_6476627d302e73e5dfa9bb45</next_chunk_id>
       <related_chunk_ids/>
       <needs_review>true</needs_review>
       <review_reasons>
@@ -27,9 +27,9 @@
       </infographic>
     </content>
   </chunk>
-  <chunk id="c_2b59463c79affd06b555748b">
+  <chunk id="c_6476627d302e73e5dfa9bb45">
     <meta>
-      <chunk_id>c_2b59463c79affd06b555748b</chunk_id>
+      <chunk_id>c_6476627d302e73e5dfa9bb45</chunk_id>
       <document_id>d_1f3e4bcf49b9b15fba4aeae8caf569f480724ceae27795e2b19ce702110fb64d</document_id>
       <file_name>3. 중소기업 정책자금 기초 가이드.pdf</file_name>
       <page_no>1</page_no>
@@ -37,30 +37,8 @@
       <heading_path/>
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
-      <bbox page="1" x0="237.8" y0="18.2" x1="357.5" y1="28.1"/>
+      <bbox page="1" x0="192.9" y0="18.2" x1="401.4" y1="457.4"/>
       <previous_chunk_id>c_8fb1c850bd35aa57762fef16</previous_chunk_id>
-      <next_chunk_id>c_a294be14110da7acc20523ba</next_chunk_id>
-      <related_chunk_ids/>
-      <needs_review>false</needs_review>
-      <review_reasons/>
-      <source_location/>
-    </meta>
-    <content>
-      <text>중소기업정책자금기초가이드</text>
-    </content>
-  </chunk>
-  <chunk id="c_a294be14110da7acc20523ba">
-    <meta>
-      <chunk_id>c_a294be14110da7acc20523ba</chunk_id>
-      <document_id>d_1f3e4bcf49b9b15fba4aeae8caf569f480724ceae27795e2b19ce702110fb64d</document_id>
-      <file_name>3. 중소기업 정책자금 기초 가이드.pdf</file_name>
-      <page_no>1</page_no>
-      <content_type>text</content_type>
-      <heading_path/>
-      <extract_method>pdf_text</extract_method>
-      <confidence>0.950</confidence>
-      <bbox page="1" x0="192.9" y0="248.5" x1="401.4" y1="457.4"/>
-      <previous_chunk_id>c_2b59463c79affd06b555748b</previous_chunk_id>
       <next_chunk_id>c_bbb2a3468979f4cc21e9e76a</next_chunk_id>
       <related_chunk_ids/>
       <needs_review>false</needs_review>
@@ -68,7 +46,8 @@
       <source_location/>
     </meta>
     <content>
-      <text>중소기업 정책자금 기초 가이드</text>
+      <text>중소기업정책자금기초가이드
+중소기업 정책자금 기초 가이드</text>
     </content>
   </chunk>
   <chunk id="c_bbb2a3468979f4cc21e9e76a">
@@ -83,7 +62,7 @@
       <extract_method>layout_analysis</extract_method>
       <confidence>0.300</confidence>
       <bbox page="1" x0="127.0" y0="722.2" x1="270.2" y1="754.6"/>
-      <previous_chunk_id>c_a294be14110da7acc20523ba</previous_chunk_id>
+      <previous_chunk_id>c_6476627d302e73e5dfa9bb45</previous_chunk_id>
       <next_chunk_id>c_260e56a831ba8789ee6c5f03</next_chunk_id>
       <related_chunk_ids/>
       <needs_review>true</needs_review>
@@ -163,6 +142,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="2" x0="28.4" y0="54.7" x1="212.4" y1="70.7"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_02f9748901a85ebf114e312d</previous_chunk_id>
       <next_chunk_id>c_f838ee453a0a39736cbe02f6</next_chunk_id>
       <related_chunk_ids/>
@@ -188,6 +168,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="2" x0="65.2" y0="83.7" x1="462.0" y1="98.7"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_6c3759f855441c0620300061</previous_chunk_id>
       <next_chunk_id>c_1516599532a769086cbfb271</next_chunk_id>
       <related_chunk_ids/>
@@ -213,6 +194,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.600</confidence>
       <bbox page="2" x0="54.0" y0="105.6" x1="564.6" y1="303.7"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_f838ee453a0a39736cbe02f6</previous_chunk_id>
       <next_chunk_id>c_cb71893f15183732aba0c836</next_chunk_id>
       <related_chunk_ids/>
@@ -241,6 +223,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="2" x0="61.2" y0="311.7" x1="266.0" y1="322.3"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_1516599532a769086cbfb271</previous_chunk_id>
       <next_chunk_id>c_778eefb9b797eca044433917</next_chunk_id>
       <related_chunk_ids/>
@@ -267,6 +250,7 @@
       <extract_method>layout_analysis</extract_method>
       <confidence>0.300</confidence>
       <bbox page="2" x0="39.2" y0="332.6" x1="97.7" y1="376.2"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_cb71893f15183732aba0c836</previous_chunk_id>
       <next_chunk_id>c_983c9f4368b0c8539e7fa2d7</next_chunk_id>
       <related_chunk_ids/>
@@ -297,8 +281,9 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="2" x0="96.3" y0="356.7" x1="283.8" y1="369.7"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_778eefb9b797eca044433917</previous_chunk_id>
-      <next_chunk_id>c_b3d8b81f2bab3e7dee8a4427</next_chunk_id>
+      <next_chunk_id>c_180140b6898c13610fb555e7</next_chunk_id>
       <related_chunk_ids/>
       <needs_review>false</needs_review>
       <review_reasons/>
@@ -308,9 +293,9 @@
       <text>정책자금 주요 용어 쉽게 이해하기!</text>
     </content>
   </chunk>
-  <chunk id="c_b3d8b81f2bab3e7dee8a4427">
+  <chunk id="c_180140b6898c13610fb555e7">
     <meta>
-      <chunk_id>c_b3d8b81f2bab3e7dee8a4427</chunk_id>
+      <chunk_id>c_180140b6898c13610fb555e7</chunk_id>
       <document_id>d_1f3e4bcf49b9b15fba4aeae8caf569f480724ceae27795e2b19ce702110fb64d</document_id>
       <file_name>3. 중소기업 정책자금 기초 가이드.pdf</file_name>
       <page_no>2</page_no>
@@ -321,21 +306,23 @@
       </heading_path>
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
-      <bbox page="2" x0="72.3" y0="390.6" x1="544.7" y1="404.4"/>
+      <bbox page="2" x0="72.3" y0="390.6" x1="562.8" y1="431.3"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_983c9f4368b0c8539e7fa2d7</previous_chunk_id>
-      <next_chunk_id>c_3fcd25650b58cdc8cb0b3d15</next_chunk_id>
+      <next_chunk_id>c_629b9c22fda57125b46f7f56</next_chunk_id>
       <related_chunk_ids/>
       <needs_review>false</needs_review>
       <review_reasons/>
       <source_location locator="중소벤처기업의경쟁력강화를위해기업의성장단계별맞춤형자금을지원"/>
     </meta>
     <content>
-      <text>융자 중진공에서정책자금을직접대출또는정책자금기준금리를적용하여은행을통해정책자금을대출하는방식</text>
+      <text>융자 중진공에서정책자금을직접대출또는정책자금기준금리를적용하여은행을통해정책자금을대출하는방식
+이차보전 시중은행대출에대해중진공에서이자일부를보전해주는방식 (※ 중진공과연계하여평가후지원받은대출에한함)</text>
     </content>
   </chunk>
-  <chunk id="c_3fcd25650b58cdc8cb0b3d15">
+  <chunk id="c_629b9c22fda57125b46f7f56">
     <meta>
-      <chunk_id>c_3fcd25650b58cdc8cb0b3d15</chunk_id>
+      <chunk_id>c_629b9c22fda57125b46f7f56</chunk_id>
       <document_id>d_1f3e4bcf49b9b15fba4aeae8caf569f480724ceae27795e2b19ce702110fb64d</document_id>
       <file_name>3. 중소기업 정책자금 기초 가이드.pdf</file_name>
       <page_no>2</page_no>
@@ -346,58 +333,9 @@
       </heading_path>
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
-      <bbox page="2" x0="72.3" y0="417.4" x1="562.8" y1="431.3"/>
-      <previous_chunk_id>c_b3d8b81f2bab3e7dee8a4427</previous_chunk_id>
-      <next_chunk_id>c_8a3d0ee4bb7465dbe932c1e0</next_chunk_id>
-      <related_chunk_ids/>
-      <needs_review>false</needs_review>
-      <review_reasons/>
-      <source_location locator="중소벤처기업의경쟁력강화를위해기업의성장단계별맞춤형자금을지원"/>
-    </meta>
-    <content>
-      <text>이차보전 시중은행대출에대해중진공에서이자일부를보전해주는방식 (※ 중진공과연계하여평가후지원받은대출에한함)</text>
-    </content>
-  </chunk>
-  <chunk id="c_8a3d0ee4bb7465dbe932c1e0">
-    <meta>
-      <chunk_id>c_8a3d0ee4bb7465dbe932c1e0</chunk_id>
-      <document_id>d_1f3e4bcf49b9b15fba4aeae8caf569f480724ceae27795e2b19ce702110fb64d</document_id>
-      <file_name>3. 중소기업 정책자금 기초 가이드.pdf</file_name>
-      <page_no>2</page_no>
-      <content_type>text</content_type>
-      <section>중소벤처기업의경쟁력강화를위해기업의성장단계별맞춤형자금을지원</section>
-      <heading_path>
-        <h>중소벤처기업의경쟁력강화를위해기업의성장단계별맞춤형자금을지원</h>
-      </heading_path>
-      <extract_method>pdf_text</extract_method>
-      <confidence>0.950</confidence>
-      <bbox page="2" x0="72.3" y0="444.3" x1="249.1" y1="458.1"/>
-      <previous_chunk_id>c_3fcd25650b58cdc8cb0b3d15</previous_chunk_id>
-      <next_chunk_id>c_1d33c1fb0d4ec1ebe04add56</next_chunk_id>
-      <related_chunk_ids/>
-      <needs_review>false</needs_review>
-      <review_reasons/>
-      <source_location locator="중소벤처기업의경쟁력강화를위해기업의성장단계별맞춤형자금을지원"/>
-    </meta>
-    <content>
-      <text>운전자금 기업경영활동에소요되는자금</text>
-    </content>
-  </chunk>
-  <chunk id="c_1d33c1fb0d4ec1ebe04add56">
-    <meta>
-      <chunk_id>c_1d33c1fb0d4ec1ebe04add56</chunk_id>
-      <document_id>d_1f3e4bcf49b9b15fba4aeae8caf569f480724ceae27795e2b19ce702110fb64d</document_id>
-      <file_name>3. 중소기업 정책자금 기초 가이드.pdf</file_name>
-      <page_no>2</page_no>
-      <content_type>text</content_type>
-      <section>중소벤처기업의경쟁력강화를위해기업의성장단계별맞춤형자금을지원</section>
-      <heading_path>
-        <h>중소벤처기업의경쟁력강화를위해기업의성장단계별맞춤형자금을지원</h>
-      </heading_path>
-      <extract_method>pdf_text</extract_method>
-      <confidence>0.950</confidence>
-      <bbox page="2" x0="72.3" y0="471.1" x1="306.5" y1="485.0"/>
-      <previous_chunk_id>c_8a3d0ee4bb7465dbe932c1e0</previous_chunk_id>
+      <bbox page="2" x0="72.3" y0="444.3" x1="306.5" y1="485.0"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
+      <previous_chunk_id>c_180140b6898c13610fb555e7</previous_chunk_id>
       <next_chunk_id>c_af119e8029f22d18b718bdee</next_chunk_id>
       <related_chunk_ids/>
       <needs_review>false</needs_review>
@@ -405,7 +343,8 @@
       <source_location locator="중소벤처기업의경쟁력강화를위해기업의성장단계별맞춤형자금을지원"/>
     </meta>
     <content>
-      <text>시설자금 사업장건축· 매입, 설비구입에소요되는자금</text>
+      <text>운전자금 기업경영활동에소요되는자금
+시설자금 사업장건축· 매입, 설비구입에소요되는자금</text>
     </content>
   </chunk>
   <chunk id="c_af119e8029f22d18b718bdee">
@@ -422,7 +361,8 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="2" x0="28.4" y0="537.6" x1="504.5" y1="554.2"/>
-      <previous_chunk_id>c_1d33c1fb0d4ec1ebe04add56</previous_chunk_id>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
+      <previous_chunk_id>c_629b9c22fda57125b46f7f56</previous_chunk_id>
       <next_chunk_id>c_96c645b69b90f91fced0e1d8</next_chunk_id>
       <related_chunk_ids/>
       <needs_review>false</needs_review>
@@ -447,6 +387,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="2" x0="206.4" y0="555.6" x1="387.1" y1="570.6"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_af119e8029f22d18b718bdee</previous_chunk_id>
       <next_chunk_id>c_403d828fca011fd85d75d1d9</next_chunk_id>
       <related_chunk_ids/>
@@ -472,6 +413,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="2" x0="209.7" y0="581.3" x1="481.9" y1="591.9"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_96c645b69b90f91fced0e1d8</previous_chunk_id>
       <next_chunk_id>c_73d0f56ba169cb3860a4cc6d</next_chunk_id>
       <related_chunk_ids/>
@@ -498,6 +440,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="2" x0="28.4" y0="627.9" x1="563.8" y1="644.4"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_403d828fca011fd85d75d1d9</previous_chunk_id>
       <next_chunk_id>c_16052d3c643a6ba437cc406b</next_chunk_id>
       <related_chunk_ids/>
@@ -523,6 +466,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="2" x0="206.4" y0="645.9" x1="422.3" y1="660.9"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_73d0f56ba169cb3860a4cc6d</previous_chunk_id>
       <next_chunk_id>c_27d4537386e297f828483389</next_chunk_id>
       <related_chunk_ids/>
@@ -548,6 +492,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="2" x0="209.7" y0="670.6" x1="557.4" y1="681.1"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_16052d3c643a6ba437cc406b</previous_chunk_id>
       <next_chunk_id>c_f7049c3859c1338a920f0bf5</next_chunk_id>
       <related_chunk_ids/>
@@ -573,6 +518,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="2" x0="209.7" y0="683.2" x1="350.4" y1="693.7"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_27d4537386e297f828483389</previous_chunk_id>
       <next_chunk_id>c_d27ad64b097988b9bbf539dc</next_chunk_id>
       <related_chunk_ids/>
@@ -598,6 +544,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="2" x0="209.7" y0="695.8" x1="432.7" y1="706.3"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_f7049c3859c1338a920f0bf5</previous_chunk_id>
       <next_chunk_id>c_00ac0f7fd969dd63402a14f4</next_chunk_id>
       <related_chunk_ids/>
@@ -623,6 +570,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="2" x0="28.4" y0="729.2" x1="417.8" y1="745.8"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_d27ad64b097988b9bbf539dc</previous_chunk_id>
       <next_chunk_id>c_368b31755591307ef3fd484c</next_chunk_id>
       <related_chunk_ids/>
@@ -648,6 +596,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="2" x0="206.4" y0="747.2" x1="541.3" y1="762.2"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_00ac0f7fd969dd63402a14f4</previous_chunk_id>
       <next_chunk_id>c_af5c86f492b7885f2f37b7e0</next_chunk_id>
       <related_chunk_ids/>
@@ -673,6 +622,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="2" x0="311.8" y0="750.3" x1="364.2" y1="761.3"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_368b31755591307ef3fd484c</previous_chunk_id>
       <next_chunk_id>c_e93315beb41aad60e0dd7efb</next_chunk_id>
       <related_chunk_ids/>
@@ -698,6 +648,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="2" x0="206.4" y0="765.2" x1="393.8" y1="780.2"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_af5c86f492b7885f2f37b7e0</previous_chunk_id>
       <next_chunk_id>c_0ad0692030ae3bcc78b85748</next_chunk_id>
       <related_chunk_ids/>
@@ -723,6 +674,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="2" x0="295.9" y0="823.0" x1="300.2" y1="834.1"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_e93315beb41aad60e0dd7efb</previous_chunk_id>
       <next_chunk_id>c_082e824b3fd3b9b7c950515c</next_chunk_id>
       <related_chunk_ids/>
@@ -748,6 +700,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="237.8" y0="18.2" x1="357.5" y1="28.1"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_0ad0692030ae3bcc78b85748</previous_chunk_id>
       <next_chunk_id>c_be42657b5bb51d153ab33512</next_chunk_id>
       <related_chunk_ids/>
@@ -774,6 +727,7 @@
       <extract_method>layout_analysis</extract_method>
       <confidence>0.300</confidence>
       <bbox page="3" x0="39.2" y0="41.5" x1="97.7" y1="85.1"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_082e824b3fd3b9b7c950515c</previous_chunk_id>
       <next_chunk_id>c_786bcb457122ca7475147f14</next_chunk_id>
       <related_chunk_ids/>
@@ -804,8 +758,9 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="96.3" y0="63.5" x1="499.6" y1="76.4"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_be42657b5bb51d153ab33512</previous_chunk_id>
-      <next_chunk_id>c_e2ac5ded0ad87bd1b4f0c093</next_chunk_id>
+      <next_chunk_id>c_b6b10652d8db0168d5178ad3</next_chunk_id>
       <related_chunk_ids/>
       <needs_review>false</needs_review>
       <review_reasons/>
@@ -815,9 +770,9 @@
       <text>정책자금 신청! 혼자하기 어렵다면, ‘정책자금 내비게이션’을 이용해 보세요!</text>
     </content>
   </chunk>
-  <chunk id="c_e2ac5ded0ad87bd1b4f0c093">
+  <chunk id="c_b6b10652d8db0168d5178ad3">
     <meta>
-      <chunk_id>c_e2ac5ded0ad87bd1b4f0c093</chunk_id>
+      <chunk_id>c_b6b10652d8db0168d5178ad3</chunk_id>
       <document_id>d_1f3e4bcf49b9b15fba4aeae8caf569f480724ceae27795e2b19ce702110fb64d</document_id>
       <file_name>3. 중소기업 정책자금 기초 가이드.pdf</file_name>
       <page_no>3</page_no>
@@ -828,58 +783,9 @@
       </heading_path>
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
-      <bbox page="3" x0="114.4" y0="87.8" x1="523.1" y1="98.8"/>
+      <bbox page="3" x0="114.4" y0="87.8" x1="541.2" y1="138.1"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_786bcb457122ca7475147f14</previous_chunk_id>
-      <next_chunk_id>c_c594e06ffd2ec21fa5b49bcd</next_chunk_id>
-      <related_chunk_ids/>
-      <needs_review>false</needs_review>
-      <review_reasons/>
-      <source_location locator="③‘정책자금온라인신청’ 메뉴클릭"/>
-    </meta>
-    <content>
-      <text>2026년부터기업의기초정보만입력해도적합자금을찾아주는‘정책자금내비게이션’서비스를도입!</text>
-    </content>
-  </chunk>
-  <chunk id="c_c594e06ffd2ec21fa5b49bcd">
-    <meta>
-      <chunk_id>c_c594e06ffd2ec21fa5b49bcd</chunk_id>
-      <document_id>d_1f3e4bcf49b9b15fba4aeae8caf569f480724ceae27795e2b19ce702110fb64d</document_id>
-      <file_name>3. 중소기업 정책자금 기초 가이드.pdf</file_name>
-      <page_no>3</page_no>
-      <content_type>text</content_type>
-      <section>③‘정책자금온라인신청’ 메뉴클릭</section>
-      <heading_path>
-        <h>③‘정책자금온라인신청’ 메뉴클릭</h>
-      </heading_path>
-      <extract_method>pdf_text</extract_method>
-      <confidence>0.950</confidence>
-      <bbox page="3" x0="114.4" y0="106.5" x1="541.2" y1="118.6"/>
-      <previous_chunk_id>c_e2ac5ded0ad87bd1b4f0c093</previous_chunk_id>
-      <next_chunk_id>c_74978d54007c9d09b726c09c</next_chunk_id>
-      <related_chunk_ids/>
-      <needs_review>false</needs_review>
-      <review_reasons/>
-      <source_location locator="③‘정책자금온라인신청’ 메뉴클릭"/>
-    </meta>
-    <content>
-      <text>정책자금신청홈페이지⇨정책자금찾기내비게이션메뉴클릭후기업정보만입력하면기업에맞는정책자금이딱!</text>
-    </content>
-  </chunk>
-  <chunk id="c_74978d54007c9d09b726c09c">
-    <meta>
-      <chunk_id>c_74978d54007c9d09b726c09c</chunk_id>
-      <document_id>d_1f3e4bcf49b9b15fba4aeae8caf569f480724ceae27795e2b19ce702110fb64d</document_id>
-      <file_name>3. 중소기업 정책자금 기초 가이드.pdf</file_name>
-      <page_no>3</page_no>
-      <content_type>text</content_type>
-      <section>③‘정책자금온라인신청’ 메뉴클릭</section>
-      <heading_path>
-        <h>③‘정책자금온라인신청’ 메뉴클릭</h>
-      </heading_path>
-      <extract_method>pdf_text</extract_method>
-      <confidence>0.950</confidence>
-      <bbox page="3" x0="114.4" y0="127.1" x1="409.8" y1="138.1"/>
-      <previous_chunk_id>c_c594e06ffd2ec21fa5b49bcd</previous_chunk_id>
       <next_chunk_id>c_4c2e1a8a8d2b9f599b364af6</next_chunk_id>
       <related_chunk_ids/>
       <needs_review>false</needs_review>
@@ -887,7 +793,9 @@
       <source_location locator="③‘정책자금온라인신청’ 메뉴클릭"/>
     </meta>
     <content>
-      <text>적합자금뿐아니라융자제한여부, 신청일정및예산현황까지한눈에확인!!</text>
+      <text>2026년부터기업의기초정보만입력해도적합자금을찾아주는‘정책자금내비게이션’서비스를도입!
+정책자금신청홈페이지⇨정책자금찾기내비게이션메뉴클릭후기업정보만입력하면기업에맞는정책자금이딱!
+적합자금뿐아니라융자제한여부, 신청일정및예산현황까지한눈에확인!!</text>
     </content>
   </chunk>
   <chunk id="c_4c2e1a8a8d2b9f599b364af6">
@@ -904,7 +812,8 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="114.4" y0="146.8" x1="366.1" y1="157.8"/>
-      <previous_chunk_id>c_74978d54007c9d09b726c09c</previous_chunk_id>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
+      <previous_chunk_id>c_b6b10652d8db0168d5178ad3</previous_chunk_id>
       <next_chunk_id>c_4e45043cd883e942a488fc62</next_chunk_id>
       <related_chunk_ids/>
       <needs_review>false</needs_review>
@@ -930,6 +839,7 @@
       <extract_method>layout_analysis</extract_method>
       <confidence>0.300</confidence>
       <bbox page="3" x0="95.8" y0="161.3" x1="162.6" y1="244.9"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_4c2e1a8a8d2b9f599b364af6</previous_chunk_id>
       <next_chunk_id>c_bf8d9cbb493bddfc430fd656</next_chunk_id>
       <related_chunk_ids/>
@@ -961,6 +871,7 @@
       <extract_method>layout_analysis</extract_method>
       <confidence>0.300</confidence>
       <bbox page="3" x0="194.0" y0="161.3" x1="260.9" y1="244.9"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_4e45043cd883e942a488fc62</previous_chunk_id>
       <next_chunk_id>c_6a4bef4345700eb0307805cc</next_chunk_id>
       <related_chunk_ids/>
@@ -992,6 +903,7 @@
       <extract_method>layout_analysis</extract_method>
       <confidence>0.300</confidence>
       <bbox page="3" x0="292.3" y0="161.3" x1="359.2" y1="244.9"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_bf8d9cbb493bddfc430fd656</previous_chunk_id>
       <next_chunk_id>c_ea15731dc8f02d54e23cb0fa</next_chunk_id>
       <related_chunk_ids/>
@@ -1023,6 +935,7 @@
       <extract_method>layout_analysis</extract_method>
       <confidence>0.300</confidence>
       <bbox page="3" x0="390.7" y0="161.3" x1="457.4" y1="244.9"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_6a4bef4345700eb0307805cc</previous_chunk_id>
       <next_chunk_id>c_dc58b840a4167b39da87a565</next_chunk_id>
       <related_chunk_ids/>
@@ -1053,6 +966,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="104.9" y0="220.6" x1="485.6" y1="260.8"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_ea15731dc8f02d54e23cb0fa</previous_chunk_id>
       <next_chunk_id>c_8f1020547b3c97ef4f530a7e</next_chunk_id>
       <related_chunk_ids/>
@@ -1078,6 +992,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="25.7" y0="279.1" x1="192.0" y1="295.1"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_dc58b840a4167b39da87a565</previous_chunk_id>
       <next_chunk_id>c_21e8a73c148affff598e15d1</next_chunk_id>
       <related_chunk_ids/>
@@ -1104,6 +1019,7 @@
       <extract_method>layout_analysis</extract_method>
       <confidence>0.300</confidence>
       <bbox page="3" x0="168.6" y0="297.2" x1="221.3" y1="350.3"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_8f1020547b3c97ef4f530a7e</previous_chunk_id>
       <next_chunk_id>c_6fccf3802da9d88b100597da</next_chunk_id>
       <related_chunk_ids/>
@@ -1135,6 +1051,7 @@
       <extract_method>layout_analysis</extract_method>
       <confidence>0.300</confidence>
       <bbox page="3" x0="271.6" y0="297.2" x1="325.1" y1="350.3"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_21e8a73c148affff598e15d1</previous_chunk_id>
       <next_chunk_id>c_2f3f497ed6ca425fe065c6a2</next_chunk_id>
       <related_chunk_ids/>
@@ -1166,6 +1083,7 @@
       <extract_method>layout_analysis</extract_method>
       <confidence>0.300</confidence>
       <bbox page="3" x0="372.6" y0="297.2" x1="423.7" y1="350.3"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_6fccf3802da9d88b100597da</previous_chunk_id>
       <next_chunk_id>c_7205e7f7578f34337f3c302f</next_chunk_id>
       <related_chunk_ids/>
@@ -1196,6 +1114,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="73.0" y0="354.5" x1="512.0" y1="376.5"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_2f3f497ed6ca425fe065c6a2</previous_chunk_id>
       <next_chunk_id>c_fa17e7bd5ed63ba0ebb71c8f</next_chunk_id>
       <related_chunk_ids/>
@@ -1221,6 +1140,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="25.7" y0="393.1" x1="416.0" y1="409.7"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_7205e7f7578f34337f3c302f</previous_chunk_id>
       <next_chunk_id>c_8ffb68a9fc0da272a511b0c3</next_chunk_id>
       <related_chunk_ids/>
@@ -1246,6 +1166,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="65.2" y0="422.1" x1="524.7" y1="437.1"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_fa17e7bd5ed63ba0ebb71c8f</previous_chunk_id>
       <next_chunk_id>c_46d075cb4459638f60f644c4</next_chunk_id>
       <related_chunk_ids/>
@@ -1271,6 +1192,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="65.2" y0="440.1" x1="478.4" y1="455.1"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_8ffb68a9fc0da272a511b0c3</previous_chunk_id>
       <next_chunk_id>c_7ba2ccb2b48dbfd227417166</next_chunk_id>
       <related_chunk_ids/>
@@ -1296,6 +1218,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="314.5" y0="463.4" x1="510.1" y1="474.5"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_46d075cb4459638f60f644c4</previous_chunk_id>
       <next_chunk_id>c_ebf90a64beb5e5fbcac05bd4</next_chunk_id>
       <related_chunk_ids/>
@@ -1321,8 +1244,9 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="25.7" y0="497.5" x1="430.6" y1="513.5"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_7ba2ccb2b48dbfd227417166</previous_chunk_id>
-      <next_chunk_id>c_8cb6731352b3cd2ce84a15a2</next_chunk_id>
+      <next_chunk_id>c_803c5ed5c9c2aec81e64f12c</next_chunk_id>
       <related_chunk_ids/>
       <needs_review>false</needs_review>
       <review_reasons/>
@@ -1332,9 +1256,9 @@
       <text>8. 제출 서류는? 9. 궁금한 사항 문의는?</text>
     </content>
   </chunk>
-  <chunk id="c_8cb6731352b3cd2ce84a15a2">
+  <chunk id="c_803c5ed5c9c2aec81e64f12c">
     <meta>
-      <chunk_id>c_8cb6731352b3cd2ce84a15a2</chunk_id>
+      <chunk_id>c_803c5ed5c9c2aec81e64f12c</chunk_id>
       <document_id>d_1f3e4bcf49b9b15fba4aeae8caf569f480724ceae27795e2b19ce702110fb64d</document_id>
       <file_name>3. 중소기업 정책자금 기초 가이드.pdf</file_name>
       <page_no>3</page_no>
@@ -1346,32 +1270,8 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="65.2" y0="524.3" x1="557.1" y1="541.5"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_ebf90a64beb5e5fbcac05bd4</previous_chunk_id>
-      <next_chunk_id>c_a3c8fa98daf1b17331d5c44c</next_chunk_id>
-      <related_chunk_ids/>
-      <needs_review>false</needs_review>
-      <review_reasons/>
-      <source_location locator="납세증명서등대부분서류는 단순문의 중진공누리집 챗봇"/>
-    </meta>
-    <content>
-      <text>납세증명서등대부분서류는 단순문의 중진공누리집 챗봇</text>
-    </content>
-  </chunk>
-  <chunk id="c_a3c8fa98daf1b17331d5c44c">
-    <meta>
-      <chunk_id>c_a3c8fa98daf1b17331d5c44c</chunk_id>
-      <document_id>d_1f3e4bcf49b9b15fba4aeae8caf569f480724ceae27795e2b19ce702110fb64d</document_id>
-      <file_name>3. 중소기업 정책자금 기초 가이드.pdf</file_name>
-      <page_no>3</page_no>
-      <content_type>text</content_type>
-      <section>납세증명서등대부분서류는 단순문의 중진공누리집 챗봇</section>
-      <heading_path>
-        <h>납세증명서등대부분서류는 단순문의 중진공누리집 챗봇</h>
-      </heading_path>
-      <extract_method>pdf_text</extract_method>
-      <confidence>0.950</confidence>
-      <bbox page="3" x0="449.8" y0="528.2" x1="530.7" y1="538.2"/>
-      <previous_chunk_id>c_8cb6731352b3cd2ce84a15a2</previous_chunk_id>
       <next_chunk_id>c_e618319bbb1161cb23b36900</next_chunk_id>
       <related_chunk_ids/>
       <needs_review>false</needs_review>
@@ -1379,7 +1279,8 @@
       <source_location locator="납세증명서등대부분서류는 단순문의 중진공누리집 챗봇"/>
     </meta>
     <content>
-      <text>(www.kosmes.or.kr)</text>
+      <text>납세증명서등대부분서류는 단순문의 중진공누리집 챗봇
+(www.kosmes.or.kr)</text>
     </content>
   </chunk>
   <chunk id="c_e618319bbb1161cb23b36900">
@@ -1396,7 +1297,8 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="65.2" y0="544.5" x1="490.0" y1="562.2"/>
-      <previous_chunk_id>c_a3c8fa98daf1b17331d5c44c</previous_chunk_id>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
+      <previous_chunk_id>c_803c5ed5c9c2aec81e64f12c</previous_chunk_id>
       <next_chunk_id>c_f2096856bc9337104e0214cf</next_chunk_id>
       <related_chunk_ids/>
       <needs_review>false</needs_review>
@@ -1421,6 +1323,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="489.2" y0="549.2" x1="562.8" y1="561.5"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_e618319bbb1161cb23b36900</previous_chunk_id>
       <next_chunk_id>c_c76bfbd0fdf8f94bc157bc6b</next_chunk_id>
       <related_chunk_ids/>
@@ -1446,6 +1349,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="65.2" y0="566.0" x1="266.2" y1="577.1"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_f2096856bc9337104e0214cf</previous_chunk_id>
       <next_chunk_id>c_377ebec43f4ed17a83d8dc96</next_chunk_id>
       <related_chunk_ids/>
@@ -1471,6 +1375,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="314.5" y0="570.8" x1="557.2" y1="581.9"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_c76bfbd0fdf8f94bc157bc6b</previous_chunk_id>
       <next_chunk_id>c_c2e6031bd7c9b40809f3ee90</next_chunk_id>
       <related_chunk_ids/>
@@ -1496,6 +1401,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="71.6" y0="579.2" x1="150.6" y1="590.3"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_377ebec43f4ed17a83d8dc96</previous_chunk_id>
       <next_chunk_id>c_45d9725ca5045a9739429646</next_chunk_id>
       <related_chunk_ids/>
@@ -1522,6 +1428,7 @@
       <extract_method>layout_analysis</extract_method>
       <confidence>0.300</confidence>
       <bbox page="3" x0="39.2" y0="608.6" x1="97.7" y1="652.2"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_c2e6031bd7c9b40809f3ee90</previous_chunk_id>
       <next_chunk_id>c_9e3c82d7f615c54ea060c5cd</next_chunk_id>
       <related_chunk_ids/>
@@ -1552,6 +1459,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="96.3" y0="630.7" x1="323.8" y1="643.7"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_45d9725ca5045a9739429646</previous_chunk_id>
       <next_chunk_id>c_b5933156a4fa26ffd8c52cbf</next_chunk_id>
       <related_chunk_ids/>
@@ -1577,6 +1485,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="114.4" y0="658.0" x1="549.3" y1="682.2"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_9e3c82d7f615c54ea060c5cd</previous_chunk_id>
       <next_chunk_id>c_9317c1b7e13a46b905a8951d</next_chunk_id>
       <related_chunk_ids/>
@@ -1602,6 +1511,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="114.4" y0="688.7" x1="413.4" y1="699.8"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_b5933156a4fa26ffd8c52cbf</previous_chunk_id>
       <next_chunk_id>c_6dcfb110c2652d2e6404f45f</next_chunk_id>
       <related_chunk_ids/>
@@ -1627,6 +1537,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="58.6" y0="714.4" x1="542.3" y1="751.9"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_9317c1b7e13a46b905a8951d</previous_chunk_id>
       <next_chunk_id>c_44a6b70eb5fba3298c0119a3</next_chunk_id>
       <related_chunk_ids/>
@@ -1652,8 +1563,9 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="3" x0="114.4" y0="767.4" x1="415.7" y1="778.5"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_6dcfb110c2652d2e6404f45f</previous_chunk_id>
-      <next_chunk_id>c_d9a5d4f6424f2e4bff87a3f1</next_chunk_id>
+      <next_chunk_id>c_35baf3543f1d1e867b816323</next_chunk_id>
       <related_chunk_ids/>
       <needs_review>false</needs_review>
       <review_reasons/>
@@ -1663,9 +1575,9 @@
       <text>컨설팅사를활용한정책자금신청, 신청서작성대행은정책자금지원과무관</text>
     </content>
   </chunk>
-  <chunk id="c_d9a5d4f6424f2e4bff87a3f1">
+  <chunk id="c_35baf3543f1d1e867b816323">
     <meta>
-      <chunk_id>c_d9a5d4f6424f2e4bff87a3f1</chunk_id>
+      <chunk_id>c_35baf3543f1d1e867b816323</chunk_id>
       <document_id>d_1f3e4bcf49b9b15fba4aeae8caf569f480724ceae27795e2b19ce702110fb64d</document_id>
       <file_name>3. 중소기업 정책자금 기초 가이드.pdf</file_name>
       <page_no>3</page_no>
@@ -1676,33 +1588,9 @@
       </heading_path>
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
-      <bbox page="3" x0="114.4" y0="788.4" x1="523.2" y1="799.5"/>
+      <bbox page="3" x0="114.4" y0="788.4" x1="523.2" y1="834.1"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_44a6b70eb5fba3298c0119a3</previous_chunk_id>
-      <next_chunk_id>c_dea9fe0d3a7c143e1171bb2f</next_chunk_id>
-      <related_chunk_ids/>
-      <needs_review>false</needs_review>
-      <review_reasons/>
-      <source_location locator="데이터자동연계로제출불필요 상세문의 정책자금전담콜센터"/>
-    </meta>
-    <content>
-      <text>또한, 부당개입으로의심될경우융자신청이취소되거나, 3년간융자신청이제한되는불이익발생가능</text>
-    </content>
-  </chunk>
-  <chunk id="c_dea9fe0d3a7c143e1171bb2f">
-    <meta>
-      <chunk_id>c_dea9fe0d3a7c143e1171bb2f</chunk_id>
-      <document_id>d_1f3e4bcf49b9b15fba4aeae8caf569f480724ceae27795e2b19ce702110fb64d</document_id>
-      <file_name>3. 중소기업 정책자금 기초 가이드.pdf</file_name>
-      <page_no>3</page_no>
-      <content_type>text</content_type>
-      <section>데이터자동연계로제출불필요 상세문의 정책자금전담콜센터</section>
-      <heading_path>
-        <h>데이터자동연계로제출불필요 상세문의 정책자금전담콜센터</h>
-      </heading_path>
-      <extract_method>pdf_text</extract_method>
-      <confidence>0.950</confidence>
-      <bbox page="3" x0="294.6" y0="823.0" x1="301.2" y1="834.1"/>
-      <previous_chunk_id>c_d9a5d4f6424f2e4bff87a3f1</previous_chunk_id>
       <next_chunk_id>c_f068b2f24b9e3f2905fd40b0</next_chunk_id>
       <related_chunk_ids/>
       <needs_review>false</needs_review>
@@ -1710,7 +1598,8 @@
       <source_location locator="데이터자동연계로제출불필요 상세문의 정책자금전담콜센터"/>
     </meta>
     <content>
-      <text>2</text>
+      <text>또한, 부당개입으로의심될경우융자신청이취소되거나, 3년간융자신청이제한되는불이익발생가능
+2</text>
     </content>
   </chunk>
   <chunk id="c_f068b2f24b9e3f2905fd40b0">
@@ -1728,7 +1617,8 @@
       <extract_method>layout_analysis</extract_method>
       <confidence>0.300</confidence>
       <bbox page="4" x0="-0.0" y0="-0.0" x1="595.2" y1="841.9"/>
-      <previous_chunk_id>c_dea9fe0d3a7c143e1171bb2f</previous_chunk_id>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
+      <previous_chunk_id>c_35baf3543f1d1e867b816323</previous_chunk_id>
       <next_chunk_id>c_1c4e31a65f2038d9eed803f0</next_chunk_id>
       <related_chunk_ids/>
       <needs_review>true</needs_review>
@@ -1758,6 +1648,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="4" x0="237.8" y0="18.2" x1="357.5" y1="28.1"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_f068b2f24b9e3f2905fd40b0</previous_chunk_id>
       <next_chunk_id>c_529a1e4fc7027295ecb98cba</next_chunk_id>
       <related_chunk_ids/>
@@ -1783,6 +1674,7 @@
       <extract_method>pdf_text</extract_method>
       <confidence>0.950</confidence>
       <bbox page="4" x0="386.7" y0="575.7" x1="509.7" y1="687.2"/>
+      <parent_chunk_id>c_02f9748901a85ebf114e312d</parent_chunk_id>
       <previous_chunk_id>c_1c4e31a65f2038d9eed803f0</previous_chunk_id>
       <related_chunk_ids/>
       <needs_review>false</needs_review>

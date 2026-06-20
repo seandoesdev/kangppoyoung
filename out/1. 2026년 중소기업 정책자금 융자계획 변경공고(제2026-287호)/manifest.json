@@ -5,42 +5,35 @@
   "file_name": "1. 2026년 중소기업 정책자금 융자계획 변경공고(제2026-287호).pdf",
   "pipeline_version": "1.0.0",
   "counts": {
-    "chunks": 1014,
+    "chunks": 875,
     "by_type": {
-      "text": 279,
+      "text": 267,
       "warning": 22,
-      "list-item": 448,
+      "list-item": 320,
       "footnote": 109,
-      "table-row": 156
+      "table-row": 157
     },
     "pages": 47,
     "scanned_pages": 0
   },
   "extract_methods": {
-    "pdf_text": 1014
+    "pdf_text": 875
   },
   "outputs": {
-    "xml": "/data/out/1. 2026년 중소기업 정책자금 융자계획 변경공고(제2026-287호)/chunks.xml",
-    "jsonl": "/data/out/1. 2026년 중소기업 정책자금 융자계획 변경공고(제2026-287호)/chunks.jsonl",
-    "manifest": "/data/out/1. 2026년 중소기업 정책자금 융자계획 변경공고(제2026-287호)/manifest.json"
+    "xml": "D:\\004_대학원 강의\\kangppoyoung\\out\\1. 2026년 중소기업 정책자금 융자계획 변경공고(제2026-287호)\\chunks.xml",
+    "jsonl": "D:\\004_대학원 강의\\kangppoyoung\\out\\1. 2026년 중소기업 정책자금 융자계획 변경공고(제2026-287호)\\chunks.jsonl",
+    "manifest": "D:\\004_대학원 강의\\kangppoyoung\\out\\1. 2026년 중소기업 정책자금 융자계획 변경공고(제2026-287호)\\manifest.json"
   },
   "review_required": {
-    "count": 14,
+    "count": 7,
     "reasons": {
-      "table_fallback": 14,
-      "low_confidence": 14
+      "table_fallback": 7,
+      "low_confidence": 7
     },
     "chunk_ids": [
       "c_1634e596c2cc62715197f086",
       "c_68d0df6971f41bb99d1d68a0",
-      "c_8089b8ca7598c525851f6259",
-      "c_37fe9d786544965eff0b3c4d",
-      "c_ee7db4f3c4aed95e9b8e340a",
-      "c_80312d53018f96953c9b0139",
-      "c_c1c80779e0ebf7232a75b341",
-      "c_3b0e2eadc0f2922f6b5e9436",
-      "c_fac4892b1460bf83e1d9bdbc",
-      "c_357689ecc8ec471553bba9c7",
+      "c_7328a12017de4137108e193a",
       "c_cc86af6bcc6ba511ff180a5b",
       "c_90ead4aed534c7a03d4fdc32",
       "c_195250b32103db1e512bc72d",
@@ -51,9 +44,13 @@
   "offline": true,
   "provider": "offline",
   "timings_ms": {
-    "build_ms": 16124,
-    "serialize_ms": 125,
-    "verify_ms": 16167
+    "build_ms": 174410,
+    "serialize_ms": 145,
+    "verify_ms": 31534
+  },
+  "merge": {
+    "enabled": true,
+    "model": "gpt-4o"
   },
   "verification": {
     "checks": {
