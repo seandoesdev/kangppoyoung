@@ -171,13 +171,35 @@ export default function Search() {
   )
 }
 
+/**
+ * 답변을 단계별로 줄바꿈한다. 명시적 줄바꿈이 있으면 그대로, 없으면 단계 표시
+ * (원형숫자 ①~⑳, "1." "2)" 등) 앞에서 줄을 나눈다. 단계 구분 화살표(→)는 줄 끝에서 정리.
+ */
+function splitAnswer(text: string): string[] {
+  let s = (text ?? '').trim()
+  if (!s) return []
+  if (!s.includes('\n')) {
+    s = s
+      .replace(/(?=[①-⑳])/g, '\n') // 원형숫자 단계 앞 줄바꿈
+      .replace(/\s+(?=\d{1,2}[.)]\s)/g, '\n') // "1." "2)" 번호 항목 앞 줄바꿈
+  }
+  return s
+    .split('\n')
+    .map((line) => line.replace(/^[\s→·]+/, '').replace(/[\s→·]+$/, '').trim())
+    .filter(Boolean)
+}
+
 function ResultView({ result }: { result: SearchResult }) {
   return (
     <div className="space-y-6">
       {/* 답변 */}
       <Card>
         <SectionLabel>답변</SectionLabel>
-        <p className="text-sm leading-relaxed text-slate-800">{result.answer}</p>
+        <div className="space-y-1 text-sm leading-relaxed text-slate-800">
+          {splitAnswer(result.answer).map((line, i) => (
+            <p key={i}>{line}</p>
+          ))}
+        </div>
         {result.evidence.length > 0 && (
           <div className="mt-3">
             <SectionLabel>근거 조항</SectionLabel>

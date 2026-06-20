@@ -10,6 +10,7 @@ import statistics
 
 from . import figures as F
 from . import ids as I
+from . import merge as MG
 from . import models as M
 from . import relations as R
 from . import tables as T
@@ -41,6 +42,7 @@ def build_chunks(pdf_path: str, cfg: Config) -> tuple[list[M.Chunk], dict]:
     raws.extend(_build_table_raws(page_tables, table_ctx, document_id, cfg))
     raws.sort(key=lambda r: (r.page_no or 0, round(r.order_y, 1), round(r.order_x, 1)))
     chunks = _to_models(raws, document_id, file_name, cfg)
+    chunks = MG.maybe_merge(chunks, cfg)  # 청크 품질 개선(병합) 스테이지 — cfg.merge_enabled+키일 때만
     R.link(chunks)
 
     doc_info = {

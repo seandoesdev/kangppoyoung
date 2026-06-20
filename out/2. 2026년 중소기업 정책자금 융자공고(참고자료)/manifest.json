@@ -5,11 +5,11 @@
   "file_name": "2. 2026년 중소기업 정책자금 융자공고(참고자료).pdf",
   "pipeline_version": "1.0.0",
   "counts": {
-    "chunks": 731,
+    "chunks": 701,
     "by_type": {
-      "text": 127,
-      "list-item": 143,
-      "table-row": 415,
+      "text": 122,
+      "table-row": 424,
+      "list-item": 109,
       "footnote": 19,
       "warning": 3,
       "infographic": 24
@@ -18,31 +18,26 @@
     "scanned_pages": 0
   },
   "extract_methods": {
-    "pdf_text": 707,
+    "pdf_text": 677,
     "layout_analysis": 24
   },
   "outputs": {
-    "xml": "/data/out/2. 2026년 중소기업 정책자금 융자공고(참고자료)/chunks.xml",
-    "jsonl": "/data/out/2. 2026년 중소기업 정책자금 융자공고(참고자료)/chunks.jsonl",
-    "manifest": "/data/out/2. 2026년 중소기업 정책자금 융자공고(참고자료)/manifest.json"
+    "xml": "D:\\004_대학원 강의\\kangppoyoung\\out\\2. 2026년 중소기업 정책자금 융자공고(참고자료)\\chunks.xml",
+    "jsonl": "D:\\004_대학원 강의\\kangppoyoung\\out\\2. 2026년 중소기업 정책자금 융자공고(참고자료)\\chunks.jsonl",
+    "manifest": "D:\\004_대학원 강의\\kangppoyoung\\out\\2. 2026년 중소기업 정책자금 융자공고(참고자료)\\manifest.json"
   },
   "review_required": {
-    "count": 35,
+    "count": 30,
     "reasons": {
-      "table_fallback": 11,
-      "low_confidence": 35,
+      "low_confidence": 30,
+      "table_fallback": 6,
       "offline_fallback": 24
     },
     "chunk_ids": [
-      "c_a3d1c323d3a3a06f7b70b813",
-      "c_a8ebb1b3bb0a083a3a0acb8a",
+      "c_76efc962fe2e71fbe0c8fb8d",
       "c_86d274f1d942053f41f86975",
       "c_431572a88b9d552d4930bf21",
-      "c_fb8b86b937431145ac37cab8",
-      "c_3fda31a576123d3c82c94331",
-      "c_fed8add7e0d4180c126cb625",
-      "c_e3bc147a7c6f0a47e1862f66",
-      "c_9e2f0c68b133d76fe7703794",
+      "c_35e5f90173017662f6645c7a",
       "c_7e53686b4f4ef45fd20a69c6",
       "c_608e6c0a310f6b2fd232acb4",
       "c_17ef92cd38bf4d24154d1a20",
@@ -75,9 +70,13 @@
   "offline": true,
   "provider": "offline",
   "timings_ms": {
-    "build_ms": 3007,
-    "serialize_ms": 84,
-    "verify_ms": 2826
+    "build_ms": 55407,
+    "serialize_ms": 148,
+    "verify_ms": 5813
+  },
+  "merge": {
+    "enabled": true,
+    "model": "gpt-4o"
   },
   "verification": {
     "checks": {
@@ -90,7 +89,7 @@
     "metrics": {
       "char_recall": 0.9999,
       "text_coverage": 0.9999,
-      "word_recall": 0.9892,
+      "word_recall": 0.9894,
       "chars_missing": 3,
       "orig_chars": 21694
     },

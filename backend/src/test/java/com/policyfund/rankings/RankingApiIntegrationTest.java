@@ -30,7 +30,7 @@ class RankingApiIntegrationTest extends AbstractIntegrationTest {
         }
         @Bean @Primary
         com.policyfund.search.synth.AnswerSynthesizer synth() {
-            return (q, c) -> new com.policyfund.search.dto.SearchResult(q, "ans", List.of(), null, null);
+            return (q, p, c) -> new com.policyfund.search.dto.SearchResult(q, "ans", List.of(), null, null);
         }
     }
 

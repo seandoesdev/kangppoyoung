@@ -26,7 +26,7 @@ class SearchApiIntegrationTest extends AbstractIntegrationTest {
     static class MockSynth {
         @Bean @Primary
         AnswerSynthesizer synth() {
-            return (query, candidates) -> new SearchResult(
+            return (query, plan, candidates) -> new SearchResult(
                     query,
                     "서류 제출 기한은 공고일로부터 30일 이내입니다.",
                     List.of(new Article("D-100", "지원 규정", "규정", "제5조", "제출 기한 30일")),

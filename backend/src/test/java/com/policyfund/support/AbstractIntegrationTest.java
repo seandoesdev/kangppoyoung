@@ -3,6 +3,7 @@ package com.policyfund.support;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.MySQLContainer;
 
 /**
@@ -18,7 +19,13 @@ import org.testcontainers.containers.MySQLContainer;
  * 특정 머신에서 연결 방식을 바꿔야 하면 커밋하지 않는 ~/.testcontainers.properties
  * 또는 셸 환경변수(DOCKER_HOST)로 주입한다(레포에 머신 종속 설정을 넣지 않는다).
  */
+// 통합 테스트는 키 없이(오프라인 제공자) 돌도록 검색 provider 를 고정한다.
+// 레포 기본값은 openai(실키 필요)이므로, 테스트에서는 hash/offline 로 핀.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TestPropertySource(properties = {
+        "search.embedding.provider=hash",
+        "search.synth.provider=offline"
+})
 public abstract class AbstractIntegrationTest {
 
     public static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.0")

@@ -5,10 +5,10 @@
   "file_name": "3. 중소기업 정책자금 기초 가이드.pdf",
   "pipeline_version": "1.0.0",
   "counts": {
-    "chunks": 69,
+    "chunks": 62,
     "by_type": {
       "infographic": 14,
-      "text": 46,
+      "text": 39,
       "footnote": 7,
       "list-item": 1,
       "warning": 1
@@ -18,12 +18,12 @@
   },
   "extract_methods": {
     "layout_analysis": 14,
-    "pdf_text": 55
+    "pdf_text": 48
   },
   "outputs": {
-    "xml": "/data/out/3. 중소기업 정책자금 기초 가이드/chunks.xml",
-    "jsonl": "/data/out/3. 중소기업 정책자금 기초 가이드/chunks.jsonl",
-    "manifest": "/data/out/3. 중소기업 정책자금 기초 가이드/manifest.json"
+    "xml": "D:\\004_대학원 강의\\kangppoyoung\\out\\3. 중소기업 정책자금 기초 가이드\\chunks.xml",
+    "jsonl": "D:\\004_대학원 강의\\kangppoyoung\\out\\3. 중소기업 정책자금 기초 가이드\\chunks.jsonl",
+    "manifest": "D:\\004_대학원 강의\\kangppoyoung\\out\\3. 중소기업 정책자금 기초 가이드\\manifest.json"
   },
   "review_required": {
     "count": 15,
@@ -54,9 +54,13 @@
   "offline": true,
   "provider": "offline",
   "timings_ms": {
-    "build_ms": 217,
-    "serialize_ms": 18,
-    "verify_ms": 218
+    "build_ms": 68113,
+    "serialize_ms": 19,
+    "verify_ms": 340
+  },
+  "merge": {
+    "enabled": true,
+    "model": "gpt-4o"
   },
   "verification": {
     "checks": {

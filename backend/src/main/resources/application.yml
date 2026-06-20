@@ -14,7 +14,7 @@ spring:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
-  # real key via OPENAI_API_KEY env; default sk-noop lets the context start without a key (only real calls fail)
+  # 기본 검색이 openai 이므로 실제 OPENAI_API_KEY 가 필요하다. sk-noop 은 컨텍스트 기동만 가능(실제 호출 실패).
   ai:
     openai:
       api-key: ${OPENAI_API_KEY:sk-noop}
@@ -22,13 +22,15 @@ spring:
         options:
           model: gpt-4o
 
-# 검색 파이프라인: 벡터(코사인) 검색 + 오프라인 해싱 임베딩 + 부팅 시 out/**/chunks.jsonl 자동 적재.
+# 검색 파이프라인: 벡터(코사인) 검색 + OpenAI 임베딩/답변 합성 + 부팅 시 out/**/chunks.jsonl 자동 적재.
+# 기본값이 openai 이므로 실제 OPENAI_API_KEY 가 필요하다(질의 임베딩·LLM 답변·부팅 적재가 모두 OpenAI 호출).
+# 키 없이 오프라인으로 돌리려면 provider 를 각각 hash / offline 로 바꾸고 chunk_embedding 을 재적재한다.
 search:
   retrieval: vector
   embedding:
-    provider: hash
+    provider: openai
   synth:
-    provider: offline   # 키 없이 동작(검색 후보를 근거로 제시). OpenAI 합성은 openai 로 전환.
+    provider: openai
   ingest:
     on-startup: true
 

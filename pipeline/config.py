@@ -20,6 +20,11 @@ class Config:
     max_chunk_chars: int = 800                 # 일반 본문 청크 상한
     min_image_area_pt: float = 2500.0          # 이 면적 미만 이미지는 장식으로 보고 스킵
 
+    # 청크 품질 개선 스테이지 (온라인 전용, docs/plan/chunk_merge_impl_plan.md)
+    merge_enabled: bool = False                # True면 LLM 경계판단 기반 병합 적용(OPENAI_API_KEY 필요)
+    merge_model: str = "gpt-4o"                # 경계 판단 모델
+    merge_cache_path: str | None = None        # 경계 결정 캐시 파일(결정론 재현)
+
     # 입력 가드
     max_input_mb: int = 100
     max_pages: int = 300

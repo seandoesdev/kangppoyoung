@@ -2,6 +2,7 @@ package com.policyfund.search.synth;
 
 import com.policyfund.search.dto.Article;
 import com.policyfund.search.dto.SearchResult;
+import com.policyfund.search.query.QueryPlan;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -21,7 +22,8 @@ public class OfflineAnswerSynthesizer implements AnswerSynthesizer {
     private static final int MAX_EVIDENCE = 5;
 
     @Override
-    public SearchResult synthesize(String query, List<Article> candidates) {
+    public SearchResult synthesize(String query, QueryPlan plan, List<Article> candidates) {
+        // 오프라인은 LLM 분석(plan)을 활용하지 않고 검색 후보를 그대로 근거로 제시한다.
         if (candidates == null || candidates.isEmpty()) {
             return new SearchResult(query, "관련 근거 조항을 찾지 못했습니다.", List.of(), null, null);
         }

@@ -2,6 +2,7 @@ package com.policyfund.search.synth;
 
 import com.policyfund.search.dto.Article;
 import com.policyfund.search.dto.SearchResult;
+import com.policyfund.search.query.QueryPlan;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,7 +16,7 @@ class OfflineAnswerSynthesizerTest {
 
     @Test
     void emptyCandidates_returnsNoEvidenceAnswer() {
-        SearchResult r = synth.synthesize("정책자금 신청 자격", List.of());
+        SearchResult r = synth.synthesize("정책자금 신청 자격", QueryPlan.trivial("정책자금 신청 자격"), List.of());
         assertThat(r.evidence()).isEmpty();
         assertThat(r.answer()).contains("찾지 못했");
         assertThat(r.query()).isEqualTo("정책자금 신청 자격");
@@ -29,7 +30,7 @@ class OfflineAnswerSynthesizerTest {
                 .mapToObj(i -> new Article("d_" + i, "기초가이드", "절차", "제" + i + "조", "본문 " + i))
                 .toList();
 
-        SearchResult r = synth.synthesize("신청 절차", candidates);
+        SearchResult r = synth.synthesize("신청 절차", QueryPlan.trivial("신청 절차"), candidates);
 
         assertThat(r.evidence()).hasSize(5);
         assertThat(r.evidence().get(0).docId()).isEqualTo("d_0");   // 순서 보존(상위가 먼저)

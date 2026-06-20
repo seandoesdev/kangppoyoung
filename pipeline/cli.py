@@ -56,6 +56,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-chunk-chars", type=int, default=800)
     ap.add_argument("--max-input-mb", type=int, default=100)
     ap.add_argument("--max-pages", type=int, default=300)
+    ap.add_argument("--merge", action="store_true",
+                    help="청크 품질 개선(병합) 스테이지 활성화(온라인, OPENAI_API_KEY 필요)")
+    ap.add_argument("--merge-model", default="gpt-4o", help="병합 경계 판단 모델")
+    ap.add_argument("--merge-cache", default=None, help="경계 결정 캐시 파일 경로(결정론 재현)")
     ap.add_argument("--no-verify", action="store_true", help="검증 단계 생략")
     ap.add_argument("--generated-at", default=None,
                     help="document/@generated_at 고정값(ISO-8601). 미지정 시 SOURCE_DATE_EPOCH "
@@ -68,6 +72,9 @@ def main(argv: list[str] | None = None) -> int:
         max_chunk_chars=args.max_chunk_chars,
         max_input_mb=args.max_input_mb,
         max_pages=args.max_pages,
+        merge_enabled=args.merge,
+        merge_model=args.merge_model,
+        merge_cache_path=args.merge_cache,
     )
     file_name = os.path.basename(args.input)
 
@@ -129,6 +136,8 @@ def main(argv: list[str] | None = None) -> int:
                                 "chunk_ids": review[:50]},
             "jsonl_skipped": len(skipped),
             "offline": True, "provider": "offline", "timings_ms": t,
+            "merge": {"enabled": cfg.merge_enabled,
+                      "model": cfg.merge_model if cfg.merge_enabled else None},
         }
 
         # 검증

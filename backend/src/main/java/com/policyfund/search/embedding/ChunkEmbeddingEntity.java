@@ -40,6 +40,10 @@ public class ChunkEmbeddingEntity {
     @Column(name = "dim")
     private int dim;
 
+    /** 문서 내 reading-order 순번(0-based). 부모-문서 확장(이웃 청크)을 위한 키. */
+    @Column(name = "seq_no")
+    private int seqNo;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -47,7 +51,7 @@ public class ChunkEmbeddingEntity {
 
     public ChunkEmbeddingEntity(String chunkId, String documentId, String fileName, String contentType,
                                 String articleNo, String embeddingText, String embeddingJson, int dim,
-                                LocalDateTime createdAt) {
+                                int seqNo, LocalDateTime createdAt) {
         this.chunkId = chunkId;
         this.documentId = documentId;
         this.fileName = fileName;
@@ -56,6 +60,7 @@ public class ChunkEmbeddingEntity {
         this.embeddingText = embeddingText;
         this.embeddingJson = embeddingJson;
         this.dim = dim;
+        this.seqNo = seqNo;
         this.createdAt = createdAt;
     }
 
@@ -67,5 +72,6 @@ public class ChunkEmbeddingEntity {
     public String getEmbeddingText() { return embeddingText; }
     public String getEmbeddingJson() { return embeddingJson; }
     public int getDim() { return dim; }
+    public int getSeqNo() { return seqNo; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 }

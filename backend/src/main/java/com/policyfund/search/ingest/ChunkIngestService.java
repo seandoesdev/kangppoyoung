@@ -47,6 +47,8 @@ public class ChunkIngestService {
         int count = 0;
         try {
             String line;
+            // seq_no: 적재되는(=DB 에 들어가는) 청크에만 문서 내 0-based 순번을 reading order 로 부여한다.
+            // 건너뛴 레코드는 순번을 소비하지 않아 DB 행끼리 연속 seq 를 유지(이웃 확장이 정확).
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) {
                     continue;
@@ -56,7 +58,7 @@ public class ChunkIngestService {
                 if (embeddingText == null || embeddingText.isBlank()) {
                     continue;
                 }
-                ChunkEmbeddingEntity entity = toEntity(record, embeddingText);
+                ChunkEmbeddingEntity entity = toEntity(record, embeddingText, count);
                 repository.save(entity);
                 count++;
             }
@@ -66,7 +68,7 @@ public class ChunkIngestService {
         return count;
     }
 
-    private ChunkEmbeddingEntity toEntity(JsonNode record, String embeddingText) throws IOException {
+    private ChunkEmbeddingEntity toEntity(JsonNode record, String embeddingText, int seqNo) throws IOException {
         String chunkId = text(record.get("chunk_id"));
         String documentId = text(record.get("document_id"));
         String contentType = text(record.get("content_type"));
@@ -78,7 +80,7 @@ public class ChunkIngestService {
         String embeddingJson = objectMapper.writeValueAsString(vector);
 
         return new ChunkEmbeddingEntity(chunkId, documentId, fileName, contentType, articleNo,
-                embeddingText, embeddingJson, vector.length, LocalDateTime.now());
+                embeddingText, embeddingJson, vector.length, seqNo, LocalDateTime.now());
     }
 
     /** heading_path 를 " > " 로 합쳐 article_no 로 쓰고, 없으면 "p."+page_no. */
