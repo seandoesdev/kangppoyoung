@@ -1,0 +1,5 @@
+# 수집/채점 중간 산출물(스크래치)
+.answers.json
+.grades.json
+.grading_input.json
+.agg.json
