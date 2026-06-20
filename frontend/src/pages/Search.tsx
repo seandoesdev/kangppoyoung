@@ -224,7 +224,7 @@ function ResultView({ result }: { result: SearchResult }) {
             <p key={i}>{line}</p>
           ))}
         </div>
-        {result.evidence.length > 0 && (
+        {result.evidence && result.evidence.length > 0 && (
           <div className="mt-3">
             <SectionLabel>근거 조항</SectionLabel>
             <div className="space-y-2">
@@ -236,8 +236,9 @@ function ResultView({ result }: { result: SearchResult }) {
         )}
       </Card>
 
-      {/* 중복 절차: 요약 1건 + 출처 */}
-      {result.duplicateSummary && (
+      {/* 중복 절차: 요약 1건 + 출처. summary/sources 가 null 일 수 있어 방어적으로 가드한다. */}
+      {result.duplicateSummary &&
+        (result.duplicateSummary.summary || (result.duplicateSummary.sources?.length ?? 0) > 0) && (
         <Card className="border-l-4 border-l-emerald-400">
           <div className="mb-2 flex items-center gap-2">
             <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
@@ -245,11 +246,13 @@ function ResultView({ result }: { result: SearchResult }) {
             </span>
             <span className="text-xs text-slate-400">동일 내용은 하나로 요약</span>
           </div>
-          <p className="mb-3 text-sm leading-relaxed text-slate-800">
-            {result.duplicateSummary.summary}
-          </p>
+          {result.duplicateSummary.summary && (
+            <p className="mb-3 text-sm leading-relaxed text-slate-800">
+              {result.duplicateSummary.summary}
+            </p>
+          )}
           <div className="flex flex-wrap gap-2">
-            {result.duplicateSummary.sources.map((a, i) => (
+            {(result.duplicateSummary.sources ?? []).map((a, i) => (
               <SourceChip key={i} article={a} />
             ))}
           </div>

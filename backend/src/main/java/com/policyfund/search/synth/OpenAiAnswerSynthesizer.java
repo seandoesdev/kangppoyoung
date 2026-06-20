@@ -65,6 +65,15 @@ public class OpenAiAnswerSynthesizer implements AnswerSynthesizer {
             return new SearchResult(query, "근거를 찾지 못했습니다.", evidence, null, null);
         }
         return new SearchResult(query, result.answer(), evidence,
-                result.duplicateSummary(), result.conflicts());
+                normalizeDuplicate(result.duplicateSummary()), result.conflicts());
+    }
+
+    // LLM 이 비어있는 중복요약을 {summary:null, sources:null} 로 반환하면 null 로 정규화한다
+    // (프론트가 sources.map 등에서 깨지지 않도록 — 빈 객체는 의미가 없으므로 미표시).
+    private static SearchResult.DuplicateSummary normalizeDuplicate(SearchResult.DuplicateSummary d) {
+        if (d == null) return null;
+        boolean noSummary = d.summary() == null || d.summary().isBlank();
+        boolean noSources = d.sources() == null || d.sources().isEmpty();
+        return (noSummary && noSources) ? null : d;
     }
 }
