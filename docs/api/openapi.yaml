@@ -702,22 +702,36 @@ components:
       type: object
       description: >-
         실무 검색·조회 빈도를 학습 우선순위로 환산한 항목.
-        근거(검색/조회 횟수)를 함께 노출하여 왜 먼저 봐야 하는지 설명한다.
-      required: [order, category, reason, searchCount, viewCount, relatedArticles]
+        대표 질문(questionExample)과 그에 대한 실제 검색 기록 기반 답변(answer)을 함께 노출하여
+        무엇을, 왜 먼저 봐야 하는지 구체적으로 안내한다.
+        answer 는 LLM 생성이 아닌 search_history 에서 매칭된 실제 데이터이며,
+        매칭 기록이 없으면 빈 문자열("")이 반환된다.
+      required: [order, category, questionExample, answer, reason, searchCount, viewCount]
       properties:
         order:
           type: integer
           minimum: 1
           description: 학습 순서(검색·조회 빈도 높은 순)
-        category: { type: string }
+        category:
+          type: string
+          description: 온보딩 학습 카테고리명
+        questionExample:
+          type: string
+          description: 이 카테고리의 대표 질문
+        answer:
+          type: string
+          description: >-
+            대표 질문에 대해 search_history 에서 가져온 실제 답변.
+            매칭되는 검색 기록이 없으면 빈 문자열("")이 반환된다(LLM 생성 아님).
         reason:
           type: string
           description: 선정 근거 설명(왜 먼저 봐야 하는지)
-        searchCount: { type: integer }
-        viewCount: { type: integer }
-        relatedArticles:
-          type: array
-          items: { $ref: '#/components/schemas/Article' }
+        searchCount:
+          type: integer
+          description: 검색 횟수
+        viewCount:
+          type: integer
+          description: 조회 횟수
 
     AssetRef:
       type: object

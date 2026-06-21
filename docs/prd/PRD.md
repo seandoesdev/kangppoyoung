@@ -70,8 +70,8 @@
 | **UC-1-1** | 검색(채팅) 기록 — 사이드바·딥링크·삭제·복원 | 채팅 기록 💬 `/q` | 검색 재사용·재조회 | `[구현됨]` |
 | **UC-1-2** | 예시 질문 — 추가/삭제/실행(최대 5) | (검색 카드 내) | 빠른 질의 시작 | `[미연동]` |
 | **UC-3** | 정책 자금 공고 — 개정본 등록 & 버전 비교 | 정책 자금 공고 `/notice/:category` | 변경 추적·갱신 누락 | `[구현됨]` |
-| **UC-4** | 유사 질문 카테고리·랭킹 | 질문 분석 `/ranking` | 자주 묻는 내용 파악 | `[미연동]` |
-| **UC-5** | 신규입사자 온보딩 (UC-4 랭킹 기반) | 온보딩 가이드 `/onboarding` | 무엇부터 봐야 할지 모름 | `[미연동]` |
+| **UC-4** | 유사 질문 카테고리·랭킹 | 질문 분석 `/ranking` | 자주 묻는 내용 파악 | `[구현됨]` |
+| **UC-5** | 신규입사자 온보딩 (UC-4 랭킹 기반) | 온보딩 가이드 `/onboarding` | 무엇부터 봐야 할지 모름 | `[구현됨]` |
 | **INFRA** | 부팅 시 청크 임베딩 적재(요청 비유발 내부 플로우) | — | UC-1 검색 데이터 소스 | `[구현됨]` |
 
 > **UC-2 흡수 명시:** 원 PRD에는 UC-2 정의가 없었고, 유저플로우에서 "민원 응대도 결국 규정·지침·절차 검색"이라는 이유로 UC-2를 UC-1로 통합 확정했다.
@@ -186,17 +186,17 @@
 - **PII 마스킹은 미구현**(추출 텍스트 마스킹 없음, §9).
 - 카테고리는 `regulation|reference`이나 컨트롤러는 String 그대로 받아 DB 조회로 검증(미존재면 `NOTICE_CATEGORY_NOT_FOUND` 404).
 
-### UC-4 — 유사 질문 카테고리·랭킹(질문 분석) `[미연동]`
+### UC-4 — 유사 질문 카테고리·랭킹(질문 분석) `[구현됨]`
 
-> 메뉴명 '질문 분석'(`/ranking`, API `/rankings`). 프론트는 `RANKING_BY_PERIOD` mock으로만 동작(`getRankings` 미호출).
+> 메뉴명 '질문 분석'(`/ranking`, API `/rankings`). **프론트는 `getRankings(period)`로 실제 백엔드와 연동**된다(rankings mock 제거, 기간 상수 `api/periods.ts`). 로딩/에러/빈 상태 처리.
 
 | FR | 요구사항 | 상태 |
 | --- | --- | --- |
-| FR-4.1 | 집계 기간(7일/30일) 선택. `GET /rankings?period=`, period **필수**(누락 시 400). | 백엔드 `[구현됨]`, 프론트 `[미연동]` |
-| FR-4.2 | 저장된 `search_history`에서 OpenAI로 유사 질문을 카테고리화한다. | 백엔드 `[구현됨]`, 프론트 `[미연동]` |
-| FR-4.3 | 빈도순(searchCount/viewCount) 랭킹을 산출·표시(검색량 막대, 순위 뱃지). | 백엔드 `[구현됨]`, 프론트 `[미연동]` |
-| FR-4.4 | 각 카테고리의 핵심 근거 조항(relatedArticles)을 함께 보여준다(SourceChip). | 백엔드 `[구현됨]`, 프론트 `[미연동]` |
-| FR-4.5 | 추세(trend: up/down/same) 지표 표시. **현재 항상 'same'(미구현 placeholder)**. | trend 로직 `[미구현]` |
+| FR-4.1 | 집계 기간(7일/30일) 선택. `GET /rankings?period=`, period **필수**(누락 시 400). | 백엔드 `[구현됨]`, 프론트 `[구현됨]` |
+| FR-4.2 | 저장된 `search_history`에서 OpenAI로 유사 질문을 카테고리화한다. | 백엔드 `[구현됨]`, 프론트 `[구현됨]` |
+| FR-4.3 | 빈도순 랭킹을 산출·표시(검색량 막대, 순위 뱃지). | 백엔드 `[구현됨]`, 프론트 `[구현됨]` |
+| FR-4.4 | 각 카테고리의 핵심 근거 조항(relatedArticles)을 함께 보여준다(SourceChip). | 백엔드 `[구현됨]`, 프론트 `[구현됨]` |
+| FR-4.5 | 추세(trend: up/down/same) 지표 표시. 백엔드 **항상 'same'(미구현 placeholder)**, 프론트는 up/down일 때만 아이콘 노출(same 숨김). | trend 로직 `[미구현]`, 표시 `[구현됨]` |
 
 **UC-4 핵심 규칙(전부 보존):**
 - 랭킹은 **실제 저장된 질의·조회 데이터(`search_history`)에서만 산출**(임의 데이터 금지).
@@ -206,26 +206,28 @@
 - **`trend`는 현재 항상 'same'**(증감 추세 미구현), **`searchCount==viewCount`**(조회수 별도 집계 미구현) — PRD/openapi의 up/down/same·viewCount 의미와 달리 코드에서는 placeholder.
 - `QuestionCategorizer`는 오프라인 폴백 없이 **OpenAI 전용**(키 필수, §9).
 - 그룹 빈도 카운트는 부분문자열 매칭(questionExample/category, 최소 1) → 짧은 카테고리/예시 시 과대·과소 집계 가능(정확도 open question, §12).
+- 프론트는 **placeholder를 정직하게 처리**: trend 아이콘은 up/down일 때만 노출(same 숨김), 조회수는 별도 표시 없이 '검색 n회' 단일 지표. 가드: 조회 중 로딩, `ApiError.message` 에러 카드, 결과 0건 빈 상태, 검색량 막대 div-by-zero 가드(빈 결과), 기간 변경 시 재조회(stale 응답 무시).
 
-### UC-5 — 신규입사자 온보딩(UC-4 랭킹 기반) `[미연동]`
+### UC-5 — 신규입사자 온보딩(UC-4 랭킹 기반) `[구현됨]`
 
-> 메뉴명 '온보딩 가이드'(`/onboarding`). UC-4 랭킹을 그대로 커리큘럼으로 환산. 프론트는 `RANKING_BY_PERIOD` 직접 사용(`getOnboardingGuide` 미호출).
+> 메뉴명 '온보딩 가이드'(`/onboarding`). UC-4 랭킹을 그대로 커리큘럼으로 환산. **프론트는 `getOnboardingGuide(period)`로 실제 백엔드와 연동**된다(서버 `OnboardingItem` 직접 사용). 로딩/에러/빈 상태 처리.
 
 | FR | 요구사항 | 상태 |
 | --- | --- | --- |
-| FR-5.1 | 학습 우선순위는 UC-4 랭킹에서 도출(임의 추천 금지). `GET /onboarding?period=`, `RankingService.rankings` 위임. | 백엔드 `[구현됨]`, 프론트 `[미연동]` |
-| FR-5.2 | '많이 보고·많이 검색한' 순서를 학습 순서(order 오름차순)로 환산. | 백엔드 `[구현됨]`, 프론트 `[미연동]` |
-| FR-5.3 | 각 항목에 선정 근거(reason='실무자 검색 N회·조회 M회…', searchCount, viewCount) 표시. | 백엔드 `[구현됨]`, 프론트 `[미연동]` |
+| FR-5.1 | 학습 우선순위는 UC-4 랭킹에서 도출(임의 추천 금지). `GET /onboarding?period=`, `RankingService.rankings` 위임. | 백엔드 `[구현됨]`, 프론트 `[구현됨]` |
+| FR-5.2 | '많이 보고·많이 검색한' 순서를 학습 순서(order 오름차순)로 환산. | 백엔드 `[구현됨]`, 프론트 `[구현됨]` |
+| FR-5.3 | 각 항목에 선정 근거(서버 `reason`='실무자 검색 N회·조회 M회…')와 **대표 질문(questionExample)·답변(answer)**을 표시. answer는 `search_history` 축적 답변에서 도출(정확 일치 우선·부분 일치 폴백·미매칭 시 빈 문자열). | 백엔드 `[구현됨]`, 프론트 `[구현됨]` |
 | FR-5.4 | 신규입사자의 질의·조회도 DB에 누적되어 랭킹에 재반영(선순환). | `[구현됨]`(search_history 경유) |
-| FR-5.5 | 기간 변화로 랭킹이 바뀌면 온보딩 우선순위도 자동 최신화. | 백엔드 `[구현됨]`, 프론트 `[미연동]` |
+| FR-5.5 | 기간 변화로 랭킹이 바뀌면 온보딩 우선순위도 자동 최신화. | 백엔드 `[구현됨]`, 프론트 `[구현됨]` |
 
 **UC-5 핵심 규칙(전부 보존):**
 - 온보딩의 **유일한 데이터 소스는 UC-4 랭킹**이며 별도 추천 로직을 두지 않는다.
-- 각 학습 항목은 **선정 근거(검색/조회 N회)를 반드시 표시**한다.
+- 각 학습 항목은 **선정 근거(검색/조회 N회)와 대표 질문·답변을 표시**한다.
+- 각 항목의 **답변(answer)은 LLM 생성이 아니라 `search_history`에 축적된 실제 답변**을 대표 질문 기준으로 조회해 노출한다(정확 일치 우선·부분 일치 폴백·미매칭 시 빈 문자열). '먼저 볼 문서·조항'(relatedArticles)은 더 이상 노출하지 않는다.
 - 커리큘럼 순서 = 랭킹 rank 오름차순(rank가 곧 학습 순서). 기간 변화로 랭킹이 바뀌면 자동 최신화.
 - `period` 기본값 **'최근 30일'**(선택, OpenAPI 계약과 일치).
 - `RankingService` 위임이므로 rankings의 모든 규칙·한계(`trend='same'`, count 동일, OpenAI 의존)를 **그대로 승계**.
-- 프론트(로컬) 규칙: 진행률 = 완료 항목 수/전체*100%, done 상태는 rank 키로 유지(기간 무관 공유, 새로고침 시 소실 가능).
+- 프론트 규칙: 진행률 = 완료 항목 수/전체*100%(빈 결과 0% 가드), done 상태는 **order 키로 `localStorage`(`onboarding:done`) 영속**(새로고침에도 유지, 기간 무관 공유). 선정 근거는 서버 `reason`을 그대로 표시(인라인 재조립 없음), **대표 질문(questionExample)과 답변(answer)을 함께 표시**(answer 빈 문자열이면 안내 문구)하고 '먼저 볼 문서·조항'(relatedArticles)은 표시하지 않는다. 로딩/에러/빈 상태 처리.
 
 ### INFRA — 부팅 시 청크 임베딩 적재 `[구현됨]`
 
@@ -491,15 +493,15 @@ chunks.jsonl: 한 줄 = {chunk_id, content_type, embedding_text, metadata}
 | | A2 이종 청크 양방향 related / A3 tables section 상속 / A4 분할표 논리 병합 / A5 config §19 확장 / A6 max_chunks·max_serialized_mb 가드 + exit 5/4 | 대기 |
 | **B** Provider 추상화(offline-first) | B1 Vision/OcrProvider + OfflineProvider + 캐시 / B2 figures→infographic 설명 | 대기 |
 | **C** Vector DB ingest + 백엔드 검색 | C1 embedding provider / C2 chunk_embedding Flyway + ingest(jsonl→DB) / C3 VectorRetrievalPort+adapter(cosine) / C4 pipeline→backend bridge(ProcessBuilder, manifest.json 권위) | **C1~C3 사실상 완료**(INFRA·UC-1 `[구현됨]`이 stale 체크박스 대체). **C4 런타임 pipeline 브리지 = UC-3 개정본 등록 경로에 도입됨**(`RagReindexService`가 등록된 원본 PDF 를 번들 파이프라인에 비동기 실행 → `chunk_embedding` 카테고리 교체, 검색 RAG↔공고 버전 동기화). 부팅 콜드스타트는 여전히 `out/**/chunks.jsonl` 적재. |
-| **D** Frontend 통합 + E2E | D1 검색 UI↔`/api/v1/search` / D2 E2E / D3 전체 테스트 green | **D1 진행**(검색·채팅 기록·UC-3 공고/개정본 등록 UI 연동 `[구현됨]`). 나머지 페이지(UC-1-2 예시·UC-4·UC-5) 미연동, E2E·전체 green 대기. |
+| **D** Frontend 통합 + E2E | D1 검색 UI↔`/api/v1/search` / D2 E2E / D3 전체 테스트 green | **D1 진행**(검색·채팅 기록·UC-3 공고/개정본 등록·UC-4 질문 분석·UC-5 온보딩 UI 연동 `[구현됨]`). 나머지 페이지(UC-1-2 예시) 미연동, E2E·전체 green 대기. |
 
 > 테스트 베이스라인: pipeline pytest 35 passed(2026-06-18 기준), A1 완료 후 37 passed(베이스라인 불일치는 §12 open question).
 
 ### 11.2 백엔드 단계(BACKEND_PRD §12)
-P1 기반(스캐폴딩·Compose·Flyway·전역에러·보안기반) → P2 notices(조회·LCS diff·승인 게이트·Vision 전처리) → P3 search(검색+OpenAI+이력·예시) → P4 rankings/onboarding → P5 프론트 연동 → Future 시맨틱 검색. **실제 현황: 백엔드 P1~P4 엔드포인트는 모두 `[구현됨]`, 프론트는 UC-1/UC-1-1/UC-3 연동 완료, UC-1-2·UC-4·UC-5 미연동.**
+P1 기반(스캐폴딩·Compose·Flyway·전역에러·보안기반) → P2 notices(조회·LCS diff·승인 게이트·Vision 전처리) → P3 search(검색+OpenAI+이력·예시) → P4 rankings/onboarding → P5 프론트 연동 → Future 시맨틱 검색. **실제 현황: 백엔드 P1~P4 엔드포인트는 모두 `[구현됨]`, 프론트는 UC-1/UC-1-1/UC-3/UC-4/UC-5 연동 완료, UC-1-2만 미연동.**
 
 ### 11.3 프론트 미연동 페이지 연동 우선순위(로드맵)
-대응 API 클라이언트는 **모두 준비**됨. (UC-3 공고·개정본 등록 마법사는 연동 완료 → 대상에서 제외.) 남은 연동 대상: **UC-1-2 예시 질문**(`Search.tsx` 로컬 state→서버), **UC-4 질문 분석**(`getRankings`), **UC-5 온보딩**(`getOnboardingGuide`). 연동 순서·우선순위는 미확정(§12).
+대응 API 클라이언트는 **모두 준비**됨. (UC-3 공고·개정본 등록 마법사, UC-4 질문 분석(`getRankings`), UC-5 온보딩(`getOnboardingGuide`)은 연동 완료 → 대상에서 제외.) 남은 연동 대상: **UC-1-2 예시 질문**(`Search.tsx` 로컬 state→서버). 연동 순서·우선순위는 미확정(§12).
 
 ---
 
@@ -521,7 +523,7 @@ P1 기반(스캐폴딩·Compose·Flyway·전역에러·보안기반) → P2 noti
 - ~~**참고자료(reference) 배지 의미**~~ — **해결됨**: `notice_category.doc_type`(V7)·`NoticeCategory.docType`으로 배지를 표시(regulation→'공고', reference→'참고자료'). 기존 `category!=='regulation'`을 '절차'로 표기하던 어긋남 제거(UC-3 핵심 규칙).
 - **ChromaDB(future)** 운영 형태·컬렉션·인덱싱·재인덱싱 전략, 한국어 전문검색 토크나이저(ngram 토큰 크기) 튜닝.
 - ~~**OpenAPI 갱신(assets 라우트 추가)**~~ — **해결됨**: `GET /api/v1/notices/assets/{id}`·`POST /api/v1/notices/assets`(sha256 64-hex)가 openapi.yaml에 반영됨, 구판 'UUID 기반 재명명' 문구는 sha256 콘텐츠 주소로 정정 완료.
-- **프론트 미연동 페이지 연동 시점·우선순위** — UC-1-2 예시질문·UC-4·UC-5(§11.3). (UC-3 공고·개정본 등록 마법사는 연동 완료.)
+- **프론트 미연동 페이지 연동 시점·우선순위** — UC-1-2 예시질문(§11.3). (UC-3 공고·개정본 등록 마법사·UC-4 질문 분석·UC-5 온보딩은 연동 완료.)
 - **App.tsx 404 폴백 부재** — 정의되지 않은 경로 진입 시 빈 화면이 의도인지.
 - **파이프라인 미결:** 임계 보정(glyph_recovery 0.85 등 한국 규정 PDF 표본 보정), PyMuPDF 라이선스(AGPL/상용 듀얼) 및 Python 3.13 휠 가용성 P0 결정(상용 vs pypdfium2 BSD 교체), 배포 토폴로지 P0(운영 JRE-only 컨테이너에 Python+PyMuPDF+tesseract+kor 추가 방식 A/B/C), 표 인식 한계(병합셀 span·셀 내 줄바꿈·세로쓰기), embedding_text LLM 보강 채택 범위·value-check 엄격도, jsonl→upsert 워커 소유(Spring vs 별도 워커), review_required 검토자 전달 채널, 2차(stored) 인젝션 소비측 방어, DPI/성능 트레이드오프, 회전/세로쓰기 표 transform 환산 한계.
 - **테스트 베이스라인 불일치:** IMPLEMENTATION_PLAN 헤더 35 passed vs A1 완료 노트 37 passed — 정본 베이스라인 확정 필요.

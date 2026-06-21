@@ -1,6 +1,5 @@
 // 정책자금 지원 업무 플랫폼 — 유저 플로우 검증용 목업 데이터
-// 핵심 설계: UC-4(유사 질문 카테고리·랭킹)가 UC-5(신규입사자 온보딩)의
-// 학습 우선순위 데이터 소스가 된다.
+// (정책문서 목록 + 검색 시나리오. UC-4 질문 분석/UC-5 온보딩은 실 API 연동으로 전환되어 목 제거됨.)
 
 export type DocType = '규정' | '지침' | '절차'
 
@@ -34,18 +33,6 @@ export interface SearchResult {
   }
   /** 상충 절차: 원문 그대로 병렬 + 출처 */
   conflicts?: Article[]
-}
-
-export interface RankingItem {
-  rank: number
-  category: string
-  questionExample: string
-  /** 조회·검색 횟수 (실무자가 많이 보고 검색한 정도) */
-  searchCount: number
-  viewCount: number
-  trend: 'up' | 'down' | 'same'
-  /** 이 카테고리의 핵심 근거 문서/조항 */
-  relatedArticles: Article[]
 }
 
 export const DOCUMENTS: PolicyDocument[] = [
@@ -102,123 +89,3 @@ export const SEARCH_SCENARIOS: SearchResult[] = [
     ],
   },
 ]
-
-/** UC-4: 유사 질문 카테고리·랭킹 (기간별) */
-export const RANKING_BY_PERIOD: Record<string, RankingItem[]> = {
-  '최근 7일': [
-    {
-      rank: 1,
-      category: '서류 제출·접수',
-      questionExample: '서류 제출 기한이 어떻게 되나요?',
-      searchCount: 142,
-      viewCount: 318,
-      trend: 'up',
-      relatedArticles: [
-        A('D-003', '서류 제출 및 접수 절차', '절차', '제4조 1항', '신청 서류는 접수 마감일로부터 영업일 기준 5일 이내에 제출하여야 한다.'),
-      ],
-    },
-    {
-      rank: 2,
-      category: '신청 자격',
-      questionExample: '소상공인도 신청 가능한가요?',
-      searchCount: 118,
-      viewCount: 264,
-      trend: 'same',
-      relatedArticles: [
-        A('D-002', '신청 자격 심사 지침', '지침', '제2조', '신청 자격은 중소기업기본법상 중소기업 및 소상공인으로 한다.'),
-      ],
-    },
-    {
-      rank: 3,
-      category: '대출 한도',
-      questionExample: '대출 한도는 어떻게 산정되나요?',
-      searchCount: 97,
-      viewCount: 201,
-      trend: 'up',
-      relatedArticles: [
-        A('D-004', '대출 한도 산정 지침', '지침', '제3조', '대출 한도는 직전 연도 매출액의 30% 이내로 산정한다.'),
-      ],
-    },
-    {
-      rank: 4,
-      category: '상환·연체',
-      questionExample: '연체하면 어떻게 되나요?',
-      searchCount: 64,
-      viewCount: 130,
-      trend: 'down',
-      relatedArticles: [
-        A('D-005', '상환 및 연체 관리 절차', '절차', '제6조', '연체 발생일로부터 7일 이내 1차 안내, 15일 경과 시 2차 독촉을 시행한다.'),
-      ],
-    },
-    {
-      rank: 5,
-      category: '금리·우대',
-      questionExample: '우대 금리 조건이 있나요?',
-      searchCount: 41,
-      viewCount: 88,
-      trend: 'same',
-      relatedArticles: [
-        A('D-001', '정책자금 융자 운용 규정', '규정', '제10조', '우대 금리는 고용 창출 실적에 따라 차등 적용한다.'),
-      ],
-    },
-  ],
-  '최근 30일': [
-    {
-      rank: 1,
-      category: '신청 자격',
-      questionExample: '소상공인도 신청 가능한가요?',
-      searchCount: 520,
-      viewCount: 1140,
-      trend: 'up',
-      relatedArticles: [
-        A('D-002', '신청 자격 심사 지침', '지침', '제2조', '신청 자격은 중소기업기본법상 중소기업 및 소상공인으로 한다.'),
-      ],
-    },
-    {
-      rank: 2,
-      category: '서류 제출·접수',
-      questionExample: '서류 제출 기한이 어떻게 되나요?',
-      searchCount: 488,
-      viewCount: 1020,
-      trend: 'same',
-      relatedArticles: [
-        A('D-003', '서류 제출 및 접수 절차', '절차', '제4조 1항', '신청 서류는 접수 마감일로부터 영업일 기준 5일 이내에 제출하여야 한다.'),
-      ],
-    },
-    {
-      rank: 3,
-      category: '대출 한도',
-      questionExample: '대출 한도는 어떻게 산정되나요?',
-      searchCount: 351,
-      viewCount: 760,
-      trend: 'up',
-      relatedArticles: [
-        A('D-004', '대출 한도 산정 지침', '지침', '제3조', '대출 한도는 직전 연도 매출액의 30% 이내로 산정한다.'),
-      ],
-    },
-    {
-      rank: 4,
-      category: '상환·연체',
-      questionExample: '연체하면 어떻게 되나요?',
-      searchCount: 240,
-      viewCount: 503,
-      trend: 'same',
-      relatedArticles: [
-        A('D-005', '상환 및 연체 관리 절차', '절차', '제6조', '연체 발생일로부터 7일 이내 1차 안내, 15일 경과 시 2차 독촉을 시행한다.'),
-      ],
-    },
-    {
-      rank: 5,
-      category: '금리·우대',
-      questionExample: '우대 금리 조건이 있나요?',
-      searchCount: 162,
-      viewCount: 333,
-      trend: 'down',
-      relatedArticles: [
-        A('D-001', '정책자금 융자 운용 규정', '규정', '제10조', '우대 금리는 고용 창출 실적에 따라 차등 적용한다.'),
-      ],
-    },
-  ],
-}
-
-export const RANKING_PERIODS = Object.keys(RANKING_BY_PERIOD)

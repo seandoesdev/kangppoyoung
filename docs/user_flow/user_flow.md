@@ -394,17 +394,18 @@
 
 ---
 
-### UC-4. 유사 질문 카테고리·랭킹 조회 (메뉴명: 질문 분석) `[미연동]`
+### UC-4. 유사 질문 카테고리·랭킹 조회 (메뉴명: 질문 분석) `[구현됨]`
 
 > 사이드바 메뉴명 '질문 분석'(라우트 `/ranking`, API `/rankings`).
-> 프론트는 `RANKING_BY_PERIOD` mock으로만 동작(`getRankings` 미호출).
+> **프론트는 `getRankings(period)`로 실제 백엔드와 연동**된다(rankings mock 제거; 기간 상수는 `frontend/src/api/periods.ts`).
 
 #### (a) 사용자·화면 흐름 — 라우트 `/ranking` (`pages/Ranking.tsx`)
 
 ```
-[기간 선택] '질문 분석' 진입 → 기본 기간(RANKING_PERIODS[0]='최근 7일'); '집계 기간' 버튼(7일/30일)으로 전환
-[결과] 각 카드: 순위 뱃지, 카테고리명 + 트렌드 아이콘(up🔺/down🔻/same➖), 대표 질문,
-        검색량 막대(searchCount 상대비율 = searchCount/max*100%), '검색 n · 조회 m', 근거 조항 칩(SourceChip)
+[기간 선택] '질문 분석' 진입 → 기본 기간(RANKING_PERIODS[0]='최근 7일', api/periods.ts); '집계 기간' 버튼(7일/30일)으로 전환 → getRankings(period) 재조회
+[로딩/에러/빈] 조회 중 로딩 표시, ApiError 시 에러 카드, 결과 0건이면 '집계된 질문이 없습니다' 빈 상태
+[결과] 각 카드: 순위 뱃지, 카테고리명 + 트렌드 아이콘(up🔺/down🔻만; 현재 백엔드가 'same' 고정이라 same은 아이콘 숨김), 대표 질문,
+        검색량 막대(searchCount 상대비율 = searchCount/max*100%, 빈 결과 div-by-zero 가드), '검색 n회'(단일 지표; viewCount는 현재 searchCount와 동일한 placeholder라 조회수 별도 표시 안 함), 근거 조항 칩(SourceChip)
 [안내] 하단에 이 랭킹이 온보딩 학습 우선순위로 환산된다는 배너
 ```
 
@@ -430,26 +431,28 @@
   시 `deleteByPeriod` 후 재적재).
 - 별도의 AI 추천 로직(검색 데이터와 무관한 임의 추천)은 만들지 않는다(비목표).
 - **`trend`는 현재 항상 'same'**(증감 추세 로직 미구현), **`searchCount==viewCount`**(조회수 별도 집계
-  미구현) — PRD/openapi의 up/down/same·viewCount 의미와 달리 코드에서는 placeholder.
+  미구현) — PRD/openapi의 up/down/same·viewCount 의미와 달리 코드에서는 placeholder. **프론트는 이를 정직하게 처리**:
+  trend 아이콘은 up/down일 때만 노출(same이면 숨김), 조회수는 별도 표시하지 않고 '검색 n회' 단일 지표만 보여준다.
 - `QuestionCategorizer`는 오프라인 폴백 없이 **OpenAI 전용**(키 필수, §8).
 - 부분문자열 빈도 매칭은 카테고리/예시가 짧으면 과대·과소 집계 가능(정확도 open question, §9).
 
 ---
 
-### UC-5. 신규입사자 온보딩 (UC-4 랭킹 기반, 메뉴명: 온보딩 가이드) `[미연동]`
+### UC-5. 신규입사자 온보딩 (UC-4 랭킹 기반, 메뉴명: 온보딩 가이드) `[구현됨]`
 
 > 사이드바 메뉴명 '온보딩 가이드'(라우트 `/onboarding`). UC-4 랭킹을 그대로 커리큘럼으로 환산.
-> 프론트는 `RANKING_BY_PERIOD`를 직접 사용(`getOnboardingGuide` 미호출).
+> **프론트는 `getOnboardingGuide(period)`로 실제 백엔드와 연동**된다(서버 `OnboardingItem` 직접 사용).
 
 #### (a) 사용자·화면 흐름 — 라우트 `/onboarding` (`pages/Onboarding.tsx`)
 
 ```
-[진입] '온보딩 가이드' 진입 → 기본 기간; 상단에 '임의 추천 아님, 실제 검색·조회 데이터 기반' 근거 카드
-[커리큘럼] 기간 버튼(7일/30일) 전환 → 커리큘럼(랭킹 rank 오름차순) 갱신
-   → 각 STEP 카드: 순번, 카테고리 + '실무 랭킹 N위', 선정 근거(검색·조회 횟수), 대표 질문,
-     '먼저 볼 문서·조항'(ArticleCard)
-[진행률] 학습 진행률 바: doneCount/total(emerald 바)
-   → '학습 완료로 표시'/'학습 완료됨 ✓' 토글 → 카드 흐려짐(opacity-60), 진행률 반영
+[진입] '온보딩 가이드' 진입 → 기본 기간; 상단에 '임의 추천 아님, 실제 검색·조회 데이터 기반' 근거 카드 → getOnboardingGuide(period)
+[로딩/에러/빈] 조회 중 로딩, ApiError 시 에러 카드, 결과 0건이면 '학습 항목이 없습니다' 빈 상태
+[커리큘럼] 기간 버튼(7일/30일) 전환 → 재조회 → 커리큘럼(order 오름차순) 갱신
+   → 각 STEP 카드: 순번(order), 카테고리 + '학습 N순위'(order), 선정 근거(서버 OnboardingItem.reason 문자열 그대로),
+     대표 질문(questionExample) + 답변(answer, search_history 축적 답변·빈 문자열이면 안내 문구) — '먼저 볼 문서·조항'(relatedArticles)은 제거(미표시)
+[진행률] 학습 진행률 바: doneCount/total(emerald 바, 빈 결과 div-by-zero 가드)
+   → '학습 완료로 표시'/'학습 완료됨 ✓' 토글 → 카드 흐려짐(opacity-60), 진행률 반영 → localStorage('onboarding:done')에 영속
 ```
 
 #### (b) 백엔드 처리 흐름 — `GET /api/v1/onboarding?period` (operationId: `getOnboardingGuide`)
@@ -458,19 +461,20 @@
 [요청 수신] OnboardingController.onboarding(period default '최근 30일')
 [랭킹 위임] OnboardingService.onboarding(period) @Transactional
    → RankingService.rankings(period) 재사용(별도 추천 로직 없음)
-   → 각 RankingItem → OnboardingItem(order 1.., category,
-        reason='실무자 검색 N회·조회 M회로 우선순위가 높습니다.', searchCount, viewCount, relatedArticles)
+   → 각 RankingItem → OnboardingItem(order 1.., category, questionExample,
+        answer(search_history에서 대표 질문 기준 조회·정확 일치 우선·부분 일치 폴백·미매칭 시 ''),
+        reason='실무자 검색 N회·조회 M회로 우선순위가 높습니다.', searchCount, viewCount)
 [응답] 200 OnboardingItem[](빈도순=학습순, order 오름차순)
 ```
 
 #### (c) 핵심 규칙 (병합)
-- 온보딩의 **유일한 데이터 소스는 UC-4 랭킹**이며 별도 추천 로직(임의 추천)을 두지 않는다.
+- 온보딩의 데이터 소스는 **UC-4 랭킹과 그 대표 질문의 `search_history` 축적 답변뿐**이며, 별도 추천 로직(임의 추천·LLM 생성 답변)을 두지 않는다.
 - 각 학습 항목은 **선정 근거(검색/조회 N회)를 반드시 표시**한다.
 - 커리큘럼 순서 = 랭킹 rank 오름차순(rank가 곧 학습 순서). 기간 변화로 랭킹이 바뀌면 온보딩 우선순위도
   **자동 최신화**된다(선순환). 신규입사자의 질의·조회도 DB에 누적되어 랭킹에 재반영된다.
 - `period` 기본값 '최근 30일'(선택, OpenAPI 계약과 일치).
 - `RankingService`를 위임 호출하므로 rankings의 모든 규칙·한계(`trend='same'`, count 동일, OpenAI 의존)를 **그대로 승계**.
-- 프론트(로컬) 규칙: 진행률 = 완료 항목 수/전체*100%, done 상태는 rank 키로 유지(기간 무관 공유, 새로고침 시 소실 가능).
+- 프론트 규칙: 진행률 = 완료 항목 수/전체*100%(빈 결과 0% 가드), done 상태는 **order 키로 `localStorage`(`onboarding:done`)에 영속**(새로고침에도 유지, 기간 무관 공유). 선정 근거는 서버 `reason`을 그대로 표시(인라인 재조립 없음), **대표 질문(questionExample)과 답변(answer)을 함께 표시**하고 '먼저 볼 문서·조항'(relatedArticles)은 표시하지 않는다(제거).
 
 ---
 
@@ -536,8 +540,8 @@
 | UC-1 | (사이드바) | 채팅 기록 💬 | `[구현됨]` | 무한스크롤(page/size, 서버 max 100), 단건 삭제(멱등 204)·전체 지우기(공용 confirm)·복원 |
 | UC-3 | `/notice` → `/notice/regulation` | (리다이렉트) | `[구현됨]` | replace 리다이렉트 |
 | UC-3 | `/notice/regulation`, `/notice/reference` | 정책 자금 공고(공고/참고자료) | `[구현됨]` | 날짜 내림차순 버전 드랍, 3단계 등록 마법사(서버 전처리·등록·자산 업로드), 바로 전 버전 diff(추가 초록/삭제 빨강), 실제 docType 배지, 백데이트 금지 |
-| UC-4 | `/ranking` | 질문 분석 | `[미연동]` | 기간별 카테고리·랭킹, 검색/조회 빈도, 트렌드 아이콘 |
-| UC-5 | `/onboarding` | 온보딩 가이드 | `[미연동]` | UC-4 랭킹 → 학습 우선순위 환산, 선정 근거 표시, 진행률 |
+| UC-4 | `/ranking` | 질문 분석 | `[구현됨]` | 기간별 카테고리·랭킹(getRankings), 검색 빈도 막대, 트렌드 아이콘(up/down만), 로딩/에러/빈 상태 |
+| UC-5 | `/onboarding` | 온보딩 가이드 | `[구현됨]` | UC-4 랭킹 → 학습 우선순위 환산(getOnboardingGuide), 선정 근거(reason)+대표 질문·답변(축적 답변) 표시, 진행률(localStorage 영속) |
 
 > 전역 네비게이션: 좌측 고정 `Sidebar.tsx`(항상 마운트, 채팅 기록 context 전역 구독), 메인은 `max-w-4xl`
 > 중앙 정렬·overflow-y-auto. '정책 자금 공고' 그룹은 `location.pathname.startsWith('/notice')`면 기본 펼침.
@@ -546,8 +550,8 @@
 > 라우트가 아니라 ImageBlock.src가 가리키는 백엔드 서빙 경로.
 
 > BASE_URL=`/api/v1`(`VITE_API_BASE_URL`로 override). `ApiError`는 `client.ts` toError가 응답 본문의
-> code/message를 파싱(없으면 statusText). **검색·채팅 기록·정책 자금 공고(UC-3)가 실제 백엔드 연동**,
-> 예시질문(UC-1-2)·랭킹(UC-4)·온보딩(UC-5)은 아직 mock.
+> code/message를 파싱(없으면 statusText). **검색·채팅 기록·정책 자금 공고(UC-3)·질문 분석(UC-4)·온보딩(UC-5)이 실제 백엔드 연동**,
+> 예시질문(UC-1-2)만 아직 mock.
 
 ---
 
@@ -626,6 +630,6 @@
   페이지 수 상한·8000자 컷 실제 적용 여부.
 - **ChromaDB(future)** 운영 형태(독립 서버 vs 임베디드)·컬렉션·인덱싱·재인덱싱 전략, 한국어 전문검색
   토크나이저(ngram 토큰 크기) 튜닝. (현재 vector 코사인 검색은 이미 동작 중.)
-- **프론트 미연동 페이지 연동 시점** — UC-4 랭킹·UC-5 온보딩·예시질문(UC-1-2)이
-  mock/로컬 state이고 대응 API 클라이언트는 준비됨. 연동 우선순위(로드맵) 확정. (UC-3 공고는 연동 완료.)
+- **프론트 미연동 페이지 연동 시점** — 예시질문(UC-1-2)이 로컬 state이고 대응 API 클라이언트는
+  준비됨. 연동 우선순위(로드맵) 확정. (UC-3 공고·UC-4 질문 분석·UC-5 온보딩은 연동 완료.)
 - **App.tsx 404 폴백 부재** — 정의되지 않은 경로 진입 시 빈 화면이 의도인지.

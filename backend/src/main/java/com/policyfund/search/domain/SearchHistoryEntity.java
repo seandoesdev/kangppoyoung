@@ -49,6 +49,7 @@ public class SearchHistoryEntity {
     public Long getId() { return id; }
     public String getSessionId() { return sessionId; }
     public String getQuery() { return query; }
+    public String getAnswer() { return answer; }
     public Instant getCreatedAt() { return createdAt; }
     public SearchResult getResultJson() { return resultJson; }
 }

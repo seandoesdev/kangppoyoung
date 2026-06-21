@@ -132,11 +132,14 @@ export interface OnboardingItem {
   /** 학습 순서(검색·조회 빈도 높은 순) */
   order: number
   category: string
+  /** 이 카테고리의 대표 질문 */
+  questionExample: string
+  /** 대표 질문에 대해 축적된 검색 기록에서 가져온 답변(매칭 기록이 없으면 빈 문자열) */
+  answer: string
   /** 선정 근거 설명(왜 먼저 봐야 하는지) */
   reason: string
   searchCount: number
   viewCount: number
-  relatedArticles: Article[]
 }
 
 /** Error */

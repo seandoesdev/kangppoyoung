@@ -45,7 +45,9 @@ class OnboardingApiIntegrationTest extends AbstractIntegrationTest {
            .andExpect(status().isOk())
            .andExpect(jsonPath("$").isArray())
            .andExpect(jsonPath("$[0].order").value(1))
-           .andExpect(jsonPath("$[0].reason").exists())
-           .andExpect(jsonPath("$[0].category").exists());
+           .andExpect(jsonPath("$[0].category").exists())
+           .andExpect(jsonPath("$[0].questionExample").value("온보딩 학습 항목 질의"))
+           .andExpect(jsonPath("$[0].answer").value("ans"))
+           .andExpect(jsonPath("$[0].reason").exists());
     }
 }
