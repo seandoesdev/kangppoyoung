@@ -12,8 +12,9 @@ import {
   getNoticeVersionDiff,
   preprocessNoticePdf,
   registerNoticeRevision,
+  uploadNoticeAsset,
 } from '../api/notices'
-import { ApiError } from '../api/client'
+import { ApiError, assetSrc } from '../api/client'
 import { Card, PageHeader, TypeBadge } from '../components/ui'
 
 const MAX_PDF_BYTES = 50 * 1024 * 1024 // 50MB (백엔드 app.preprocess.max-bytes 와 이중)
@@ -114,7 +115,7 @@ export default function PolicyNotice() {
       {/* 툴바: 오른쪽 상단 버전 드랍박스 + 등록 버튼 */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <TypeBadge type={category === 'regulation' ? '규정' : '절차'} />
+          <TypeBadge type={notice?.docType ?? (category === 'reference' ? '참고자료' : '공고')} />
           <span className="text-sm font-semibold text-slate-700">{docTitle}</span>
         </div>
         <div className="flex items-center gap-2">
@@ -233,7 +234,7 @@ function BlockView({ block }: { block: ContentBlock }) {
     return (
       <div className="px-2 py-1">
         <img
-          src={block.src}
+          src={assetSrc(block.src)}
           alt={block.name ?? '이미지'}
           className="max-h-64 rounded-lg border border-slate-200"
         />
@@ -266,7 +267,7 @@ function DiffRow({ diff }: { diff: DiffBlock }) {
       {block.type === 'image' ? (
         <div>
           <img
-            src={block.src}
+            src={assetSrc(block.src)}
             alt={block.name ?? '이미지'}
             className={`max-h-56 rounded-lg border ${
               isAdd ? 'border-emerald-300' : 'border-rose-300 opacity-70'
@@ -339,7 +340,7 @@ function ReviewBlock({ block, tone }: { block: ContentBlock; tone: 'same' | 'del
     return (
       <div className={`rounded-lg border p-2 ${del ? 'border-rose-200 bg-rose-50' : 'border-slate-100'}`}>
         <img
-          src={block.src}
+          src={assetSrc(block.src)}
           alt={block.name ?? '이미지'}
           className={`max-h-40 rounded border border-slate-200 ${del ? 'opacity-70' : ''}`}
         />
@@ -378,8 +379,19 @@ function RegisterModal({
   const [blocks, setBlocks] = useState<EditorBlock[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [imgError, setImgError] = useState<string | null>(null)
+  const [imgUploading, setImgUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const imageRef = useRef<HTMLInputElement>(null)
+  // 진행 중 비동기(전처리/이미지 업로드) 응답이 도착하기 전에 모달이 닫히면 setState 를 건너뛴다.
+  // 마운트 시 true 로 재설정해 StrictMode(개발) 이중 마운트에서도 가드가 영구 차단되지 않게 한다.
+  const aliveRef = useRef(true)
+  useEffect(() => {
+    aliveRef.current = true
+    return () => {
+      aliveRef.current = false
+    }
+  }, [])
 
   // PDF 선택 → 사전검증 → 백엔드 전처리(POST .../revisions/preprocess) → 검토 화면.
   async function pickPdf(files: FileList | null) {
@@ -398,9 +410,11 @@ function RegisterModal({
     setStep('processing')
     try {
       const res = await preprocessNoticePdf(category, f)
+      if (!aliveRef.current) return
       setBlocks(res.blocks.map((b) => ({ ...b, id: blockId++ })))
       setStep('review')
     } catch (e) {
+      if (!aliveRef.current) return
       setProcError(errMsg(e, '전처리 중 오류가 발생했습니다. 다시 시도하세요.'))
       setStep('upload')
     }
@@ -410,18 +424,22 @@ function RegisterModal({
     setBlocks((prev) => [...prev, { id: blockId++, type: 'text', text: '' }])
   }
 
-  function addImages(files: FileList | null) {
-    if (!files) return
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        setBlocks((prev) => [
-          ...prev,
-          { id: blockId++, type: 'image', src: String(reader.result), name: file.name },
-        ])
+  async function addImages(files: FileList | null) {
+    if (!files || files.length === 0) return
+    setImgError(null)
+    setImgUploading(true)
+    try {
+      for (const file of Array.from(files)) {
+        // 수동 추가 이미지도 콘텐츠 주소 자산으로 업로드 → 전처리 이미지와 동일 규칙(diff 동등성·저장 일관성).
+        const { url } = await uploadNoticeAsset(file)
+        if (!aliveRef.current) return
+        setBlocks((prev) => [...prev, { id: blockId++, type: 'image', src: url, name: file.name }])
       }
-      reader.readAsDataURL(file)
-    })
+    } catch (e) {
+      if (aliveRef.current) setImgError(errMsg(e, '이미지 업로드에 실패했습니다.'))
+    } finally {
+      if (aliveRef.current) setImgUploading(false)
+    }
   }
 
   function updateText(id: number, text: string) {
@@ -444,6 +462,11 @@ function RegisterModal({
   }
 
   async function handleApprove() {
+    // 개정본은 항상 새 최신본으로만 등록(과거 시행일 금지) — 백엔드 INVALID_EFFECTIVE_DATE 와 동일 규칙.
+    if (previous && date < previous.date) {
+      setSubmitError(`시행일은 현재 최신본(${previous.date}) 이후여야 합니다. 과거 시행일로는 등록할 수 없습니다.`)
+      return
+    }
     const clean: ContentBlock[] = blocks
       .map((b): ContentBlock =>
         b.type === 'text'
@@ -552,9 +575,15 @@ function RegisterModal({
                       <input
                         type="date"
                         value={date}
+                        min={previous?.date}
                         onChange={(e) => setDate(e.target.value)}
                         className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
                       />
+                      {previous && (
+                        <p className="mt-1 text-xs text-slate-400">
+                          현재 최신본({previous.date}) 이후 날짜만 등록할 수 있습니다.
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -592,9 +621,10 @@ function RegisterModal({
                           </button>
                           <button
                             onClick={() => imageRef.current?.click()}
-                            className="rounded border border-slate-300 px-2 py-0.5 text-xs font-semibold text-slate-600 hover:bg-white"
+                            disabled={imgUploading}
+                            className="rounded border border-slate-300 px-2 py-0.5 text-xs font-semibold text-slate-600 hover:bg-white disabled:opacity-50"
                           >
-                            + 이미지
+                            {imgUploading ? '업로드 중…' : '+ 이미지'}
                           </button>
                           <input
                             ref={imageRef}
@@ -609,6 +639,11 @@ function RegisterModal({
                           />
                         </div>
                       </div>
+                      {imgError && (
+                        <div className="border-b border-rose-100 bg-rose-50 px-3 py-1.5 text-xs text-rose-600">
+                          {imgError}
+                        </div>
+                      )}
                       <div className="space-y-2 p-3">
                         {blocks.length === 0 && (
                           <p className="py-6 text-center text-xs text-slate-400">
@@ -652,7 +687,7 @@ function RegisterModal({
                                 ) : (
                                   <div>
                                     <img
-                                      src={b.src}
+                                      src={assetSrc(b.src)}
                                       alt={b.name ?? '이미지'}
                                       className="max-h-40 rounded border border-slate-200"
                                     />

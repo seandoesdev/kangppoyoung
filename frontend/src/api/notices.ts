@@ -1,6 +1,7 @@
 // 정책 자금 공고 · 문서 버전 관리 (OpenAPI tag: notices)
 import { http } from './client'
 import type {
+  AssetRef,
   ContentBlock,
   DiffBlock,
   NoticeCategory,
@@ -43,4 +44,11 @@ export function preprocessNoticePdf(
     `/notices/${category}/revisions/preprocess`,
     form,
   )
+}
+
+/** POST /notices/assets — 검토 단계에서 수동 추가하는 이미지를 콘텐츠 주소 자산으로 업로드 */
+export function uploadNoticeAsset(file: File): Promise<AssetRef> {
+  const form = new FormData()
+  form.append('file', file)
+  return http.postForm<AssetRef>(`/notices/assets`, form)
 }

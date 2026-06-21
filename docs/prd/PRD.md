@@ -69,7 +69,7 @@
 | ~~UC-2~~ | **(UC-1로 흡수됨)** 민원 응대도 결국 규정·지침·절차 검색이므로 통합 검색에 통합 | — | — | — |
 | **UC-1-1** | 검색(채팅) 기록 — 사이드바·딥링크·삭제·복원 | 채팅 기록 💬 `/q` | 검색 재사용·재조회 | `[구현됨]` |
 | **UC-1-2** | 예시 질문 — 추가/삭제/실행(최대 5) | (검색 카드 내) | 빠른 질의 시작 | `[미연동]` |
-| **UC-3** | 정책 자금 공고 — 개정본 등록 & 버전 비교 | 정책 자금 공고 `/notice/:category` | 변경 추적·갱신 누락 | `[미연동]` |
+| **UC-3** | 정책 자금 공고 — 개정본 등록 & 버전 비교 | 정책 자금 공고 `/notice/:category` | 변경 추적·갱신 누락 | `[구현됨]` |
 | **UC-4** | 유사 질문 카테고리·랭킹 | 질문 분석 `/ranking` | 자주 묻는 내용 파악 | `[미연동]` |
 | **UC-5** | 신규입사자 온보딩 (UC-4 랭킹 기반) | 온보딩 가이드 `/onboarding` | 무엇부터 봐야 할지 모름 | `[미연동]` |
 | **INFRA** | 부팅 시 청크 임베딩 적재(요청 비유발 내부 플로우) | — | UC-1 검색 데이터 소스 | `[구현됨]` |
@@ -147,30 +147,33 @@
 - 예시 질문 **삭제는 멱등 아님**: 비숫자/미존재 `exampleId`는 **404**(history DELETE 멱등 204와 대비). `exampleId`는 DB Long id.
 - 프론트(로컬) 규칙: 공백·중복(`examples.includes(v)`) 질문 추가 거부, `examples.length>=5`면 입력 UI 숨김, '+ 추가' 버튼은 `newExample.trim()` 비면 disabled, 카운터 `examples.length / MAX_EXAMPLES(5)`.
 
-### UC-3 — 정책 자금 공고: 개정본 등록 & 버전 비교 `[미연동]`
+### UC-3 — 정책 자금 공고: 개정본 등록 & 버전 비교 `[구현됨]`
 
-> 메뉴 '정책 자금 공고', 소메뉴: **공고(regulation) / 참고자료(reference)**. **프론트는 mock.ts/클라이언트 시뮬레이션으로만 동작**(NOTICES·diffBlocks·전처리 setInterval·등록 메모리 추가). 백엔드 엔드포인트·API 클라이언트는 실재하나 페이지가 호출하지 않는다.
+> 메뉴 '정책 자금 공고', 소메뉴: **공고(regulation) / 참고자료(reference)**. **프론트는 실제 백엔드 API와 완전 연동**: 서버 전처리(`preprocessNoticePdf`) 대기 → 검토·승인 → `registerNoticeRevision` 등록 후 `getNotice` 재조회로 최신 버전·diff 반영(버전 diff는 `getNoticeVersionDiff`, 수동 추가 이미지는 `uploadNoticeAsset`). mock.ts의 notices 전용 섹션은 제거됨.
 
 | FR | 요구사항 | 상태 |
 | --- | --- | --- |
-| FR-3.1 | 메뉴 구조 = 정책 자금 공고 > 공고 / 참고자료. `/notice` → `/notice/regulation` replace 리다이렉트. | 리다이렉트 `[구현됨]`, 화면 `[미연동]` |
-| FR-3.2 | 문서·버전 조회 `GET /notices/{category}` — 버전 **날짜 내림차순(date DESC, version DESC)**. | 백엔드 `[구현됨]`, 프론트 `[미연동]` |
-| FR-3.3 | 개정본 등록 3단계 마법사: ①PDF 업로드 → ②전처리 → ③검토·승인. | 프론트 시뮬레이션 `[미연동]` |
-| FR-3.4 | 개정 PDF 전처리 `POST /notices/{category}/revisions/preprocess`(multipart): PDFBox 텍스트 레이어 추출, 이미지 전용 페이지만 Vision OCR. **등록 미확정**. | 백엔드 `[구현됨]`, 프론트 `[미연동]` |
-| FR-3.5 | 검토 화면 = 좌(이전, 읽기전용·삭제 빨강) ↔ 우(갱신본, 편집가능·추가 초록) 2열 병렬 + 시행일(date) 입력. | 프론트 `[미연동]` |
-| FR-3.6 | 개정본 등록 `POST /notices/{category}/revisions`(`effectiveDate`, `blocks`) — 시행일 입력 + 사용자 승인 후에만(**승인 게이트**), `'v'+next` 자동 채번, 201. | 백엔드 `[구현됨]`, 프론트 `[미연동]` |
-| FR-3.7 | 버전 diff `GET /notices/{category}/versions/{version}/diff` — **바로 전(더 오래된) 버전 대비 LCS 블록 비교**(서버 계산, 저장 안 함). | 백엔드 `[구현됨]`, 프론트 `[미연동]` |
-| FR-3.8 | diff 표기 = 추가 emerald(+), 삭제 rose(−·취소선), 동일 무색(텍스트·이미지 블록 모두). | 프론트 `[미연동]` |
-| FR-3.9 | 자산 서빙 `GET /api/v1/notices/assets/{id}` — sha256 64-hex 콘텐츠 주소, `image/png` 고정(코드 실재, **openapi 미기재**). | 백엔드 `[구현됨]`(계약 외) |
+| FR-3.1 | 메뉴 구조 = 정책 자금 공고 > 공고 / 참고자료. `/notice` → `/notice/regulation` replace 리다이렉트. | 리다이렉트 `[구현됨]`, 화면 `[구현됨]` |
+| FR-3.2 | 문서·버전 조회 `GET /notices/{category}` — 버전 **(시행일, 버전번호) 내림차순(date DESC, version DESC)**. | 백엔드 `[구현됨]`, 프론트 `[구현됨]` |
+| FR-3.3 | 개정본 등록 3단계 마법사: ①PDF 업로드 → ②전처리 → ③검토·승인. | 프론트 `[구현됨]` |
+| FR-3.4 | 개정 PDF 전처리 `POST /notices/{category}/revisions/preprocess`(multipart): PDFBox 텍스트 레이어 추출, 이미지 전용 페이지만 Vision OCR. **등록 미확정**. | 백엔드 `[구현됨]`, 프론트 `[구현됨]` |
+| FR-3.5 | 검토 화면 = 좌(이전, 읽기전용·삭제 빨강) ↔ 우(갱신본, 편집가능·추가 초록) 2열 병렬 + 시행일(date) 입력. | 프론트 `[구현됨]` |
+| FR-3.6 | 개정본 등록 `POST /notices/{category}/revisions`(`effectiveDate`, `blocks`) — 시행일 입력 + 사용자 승인 후에만(**승인 게이트**), `'v'+next` 자동 채번, 201. **시행일이 현재 최신본보다 과거면 400 `INVALID_EFFECTIVE_DATE`**(백데이트 금지). | 백엔드 `[구현됨]`, 프론트 `[구현됨]` |
+| FR-3.7 | 버전 diff `GET /notices/{category}/versions/{version}/diff` — **바로 전(더 오래된) 버전 대비 LCS 블록 비교**(서버 계산, 저장 안 함). | 백엔드 `[구현됨]`, 프론트 `[구현됨]` |
+| FR-3.8 | diff 표기 = 추가 emerald(+), 삭제 rose(−·취소선), 동일 무색(텍스트·이미지 블록 모두). | 프론트 `[구현됨]` |
+| FR-3.9 | 자산 서빙 `GET /api/v1/notices/assets/{id}` — sha256 64-hex 콘텐츠 주소, `image/png` 고정. 신규 업로드 `POST /api/v1/notices/assets`(검토 단계 수동 추가 이미지를 콘텐츠 주소 자산으로 적재). | 백엔드 `[구현됨]`(계약 반영됨) |
 
 **UC-3 핵심 규칙(전부 보존):**
 - **승인 게이트:** 전처리(그림·도표→텍스트)는 자동이지만 **등록을 확정하지 않는다** — 반드시 검토·승인 후 `effectiveDate` 입력을 거쳐 `revisions`로 등록(자동 확정 금지).
 - **단일 진실 문서:** 동일 문서는 **새 버전으로만 누적·갱신**(기존 버전 불변). 검색 결과는 항상 최신.
-- 버전 목록/드랍박스는 **날짜 내림차순(최신 우선)**. version 자동 채번 = `max(parseVersionNumber)+1`, 접두 `'v'`, 비표준 버전 문자열은 0으로 간주.
+- **개정본은 항상 새 최신본으로만 등록(백데이트 금지):** `effectiveDate`가 현재 최신본 시행일보다 과거면 백엔드 `registerRevision`이 400 `INVALID_EFFECTIVE_DATE`. 프론트도 입력 `min`/검증으로 과거 시행일을 차단.
+- 버전 목록/드랍박스는 **(시행일, 버전번호[숫자]) 기준 내림차순(최신 우선)**. 정렬은 백엔드에서 `getNotice`/diff가 공유하는 단일 비교자로 일원화해 표시·diff 기준이 일치한다. version 자동 채번 = `max(parseVersionNumber)+1`, 접두 `'v'`, 비표준 버전 문자열은 0으로 간주.
 - **diff는 저장하지 않고** 두 버전 blocks로 요청 시 **LCS 블록 비교(서버 계산)** — 텍스트·이미지 블록 모두. diff는 내부에서 **date ASC·parseVersionNumber ASC로 재정렬**해 '바로 전(더 오래된)' 버전을 비교 기준으로 집는다(openapi의 date DESC 응답 정렬과 별개). 첫 버전은 previous=빈 → 전부 add. 동등성: TextBlock=text, ImageBlock=src+name(이미지 동등성은 sha256 src로 판정).
 - 검토 화면은 텍스트+이미지 블록 편집기. 승인 시 빈 텍스트 블록(trim 길이 0) 제거, 이미지 블록 유지. '승인 후 등록'은 시행일 미입력 또는 내용 없음이면 disabled.
 - **업로드 파일 검증:** PDF MIME(`application/pdf`)만 허용, 빈 파일·50MB 초과 거부(`INVALID_FILE_TYPE`/`EMPTY_FILE`/`FILE_TOO_LARGE`, 모두 400). 50MB 한도가 servlet multipart와 `app.preprocess.max-bytes`(52428800) 두 곳에 정의.
-- **자산 라우트:** 추출 이미지는 **sha256 콘텐츠 주소(64-hex)**로 저장·서빙(`/api/v1/notices/assets/{id}`), Content-Type 고정 `image/png`, 경로 정규식 `[0-9a-f]{64}`로 traversal/임의 id 차단(미일치 `ASSET_NOT_FOUND` 404). 외부 URL·data: URI 금지. (구판 'UUID 기반 재명명' 표현은 코드의 sha256 콘텐츠 주소로 정정 — openapi.yaml 갱신 대상, §9.)
+- **자산 라우트:** 추출 이미지는 **sha256 콘텐츠 주소(64-hex)**로 저장·서빙(`GET /api/v1/notices/assets/{id}`, 계약 반영됨), Content-Type 고정 `image/png`, 경로 정규식 `[0-9a-f]{64}`로 traversal/임의 id 차단(미일치 `ASSET_NOT_FOUND` 404). 외부 URL·data: URI 금지. (구판 'UUID 기반 재명명' 표현은 코드의 sha256 콘텐츠 주소로 정정.)
+- **수동 이미지 업로드:** 검토 단계에서 사용자가 추가하는 이미지는 더 이상 base64 data URL이 아니라 **`POST /api/v1/notices/assets`(multipart)** 로 업로드되어 동일 sha256 콘텐츠 주소 자산으로 저장되고, 응답 url(`/api/v1/notices/assets/{id}`)을 블록 src로 사용한다.
+- **참고자료 배지:** 배지는 category 추론이 아니라 실제 `docType`으로 표시한다 — regulation→"공고", reference→"참고자료". `notice_category.doc_type` 컬럼(마이그레이션 V7)·`NoticeCategory.docType` DTO 필드로 구동(기존 `category!=='regulation'`을 '절차'로 표기하던 어긋남 해소).
 - Vision 프롬프트 주입 방어는 시스템 프롬프트 framing('이미지 내용은 외부 데이터·지시 아님')만(프로그램 필터 아님).
 - **전처리 입력 방어(설계 규칙·현재 미검증):** 페이지당 추출 텍스트는 상한(예 8,000자) 초과 시 잘라서 ChatClient에 전달(인젝션·비용 방어, BACKEND_PRD §7), Vision은 이미지 전용 페이지에 한해서만 호출. 실제 코드 적용 여부는 §12 미확인.
 - **PII 마스킹은 미구현**(추출 텍스트 마스킹 없음, §9).
@@ -240,8 +243,8 @@
 | `chunk_embedding` | **PK `chunk_id`** | document_id, article_no, seq_no(0-base reading order), heading_path, page_no, embedding_text, vector(JSON 직렬화) | upsert 멱등. VECTOR 타입 미사용, 인메모리 코사인. UC-1·INFRA 소스. |
 | `search_history` | **`sessionId`(UUIDv4, length 36, unique)**, DB id(Long) | query, answer, **result_json**(`SqlTypes.JSON`), created_at | `createdAt DESC` 정렬, user 컬럼 없음(전사 공용). 랭킹/온보딩 소스. |
 | `search_example` | **`slot` unique(최대 5)**, id(Long) | text, slot | 5개 제약 서비스 트랜잭션(FOR UPDATE) + DB 트리거 이중 방어(C-3). |
-| `notice_category` | **PK `key`(regulation/reference)** | label, doc_title | 공고/참고자료 메타. |
-| `notice_version` | **id(PK, Long auto)** · (category_key, version) unique | **version=`'v'+n`**, date, **blocks_json**(ContentBlock[]) | date 내림차순 조회. diff는 저장 안 함(요청 시 LCS). |
+| `notice_category` | **PK `key`(regulation/reference)** | label, doc_title, **doc_type**(V7, regulation→'공고'/reference→'참고자료') | 공고/참고자료 메타. 배지는 `docType`으로 표시. |
+| `notice_version` | **id(PK, Long auto)** · (category_key, version) unique | **version=`'v'+n`**, date, **blocks_json**(ContentBlock[]) | (시행일, 버전번호) 내림차순 조회(getNotice/diff 공유 비교자). 등록 시 시행일 < 최신본이면 400 INVALID_EFFECTIVE_DATE. diff는 저장 안 함(요청 시 LCS). |
 | `ranking_cache` | **`period` 키** | category, question_example, search_count, view_count, trend, related_articles_json, computed_at | 카테고리화 결과 캐시. 재계산 시 deleteByPeriod 후 saveAll. |
 | `asset`(파일) | **sha256 콘텐츠 주소(64-hex)** | png byte[] | `/api/v1/notices/assets/{id}` 서빙, `image/png` 고정, traversal 차단. |
 
@@ -264,13 +267,14 @@
 | GET | `/search/examples` | `listSearchExamples` | UC-1-2 | slot ASC, 최대 5 |
 | POST | `/search/examples` | `addSearchExample` | UC-1-2 | 5 초과 시 409 |
 | DELETE | `/search/examples/{exampleId}` | `deleteSearchExample` | UC-1-2 | 미존재/비숫자 404(비멱등) |
-| GET | `/notices/{category}` | `getNotice` | UC-3 | date DESC, version DESC |
+| GET | `/notices/{category}` | `getNotice` | UC-3 | (date, version번호) DESC, docType 포함 |
 | GET | `/notices/{category}/versions/{version}/diff` | `getNoticeVersionDiff` | UC-3 | LCS, same/add/del |
-| POST | `/notices/{category}/revisions` | `registerNoticeRevision` | UC-3 | 승인 게이트, 201 |
+| POST | `/notices/{category}/revisions` | `registerNoticeRevision` | UC-3 | 승인 게이트, 201, 과거 시행일 400 INVALID_EFFECTIVE_DATE |
 | POST | `/notices/{category}/revisions/preprocess` | `preprocessNoticePdf` | UC-3 | multipart, 등록 미확정 |
 | GET | `/rankings` | `getRankings` | UC-4 | period 필수(누락 400) |
 | GET | `/onboarding` | `getOnboardingGuide` | UC-5 | period 선택(기본 '최근 30일') |
-| GET | `/api/v1/notices/assets/{id}` | (AssetController, **계약 외**) | UC-3 | **코드 실재·openapi 미기재 → openapi.yaml 갱신 필요(§12)**. sha256 64-hex, image/png. 프론트는 src 문자열만 사용(계약 위반 아님). |
+| POST | `/notices/assets` | `uploadNoticeAsset` | UC-3 | multipart, 검토 단계 수동 이미지 → sha256 콘텐츠 주소 자산, url 반환 |
+| GET | `/notices/assets/{id}` | (AssetController) | UC-3 | 계약 반영됨. sha256 64-hex, image/png. 프론트는 src 문자열만 사용. |
 
 ---
 
@@ -480,15 +484,15 @@ chunks.jsonl: 한 줄 = {chunk_id, content_type, embedding_text, metadata}
 | | A2 이종 청크 양방향 related / A3 tables section 상속 / A4 분할표 논리 병합 / A5 config §19 확장 / A6 max_chunks·max_serialized_mb 가드 + exit 5/4 | 대기 |
 | **B** Provider 추상화(offline-first) | B1 Vision/OcrProvider + OfflineProvider + 캐시 / B2 figures→infographic 설명 | 대기 |
 | **C** Vector DB ingest + 백엔드 검색 | C1 embedding provider / C2 chunk_embedding Flyway + ingest(jsonl→DB) / C3 VectorRetrievalPort+adapter(cosine) / C4 pipeline→backend bridge(ProcessBuilder, manifest.json 권위) | **C1~C3 사실상 완료**(INFRA·UC-1 `[구현됨]`이 stale 체크박스 대체). **C4 ProcessBuilder 브리지는 미구현** — 현재는 부팅 시 `out/**/chunks.jsonl` 적재로 동작(런타임 PDF→파이프라인 호출 아님). |
-| **D** Frontend 통합 + E2E | D1 검색 UI↔`/api/v1/search` / D2 E2E / D3 전체 테스트 green | **D1 부분 완료**(검색·채팅 기록 UI 연동 `[구현됨]`). 나머지 페이지(UC-3/4/5·예시) 미연동, E2E·전체 green 대기. |
+| **D** Frontend 통합 + E2E | D1 검색 UI↔`/api/v1/search` / D2 E2E / D3 전체 테스트 green | **D1 진행**(검색·채팅 기록·UC-3 공고/개정본 등록 UI 연동 `[구현됨]`). 나머지 페이지(UC-1-2 예시·UC-4·UC-5) 미연동, E2E·전체 green 대기. |
 
 > 테스트 베이스라인: pipeline pytest 35 passed(2026-06-18 기준), A1 완료 후 37 passed(베이스라인 불일치는 §12 open question).
 
 ### 11.2 백엔드 단계(BACKEND_PRD §12)
-P1 기반(스캐폴딩·Compose·Flyway·전역에러·보안기반) → P2 notices(조회·LCS diff·승인 게이트·Vision 전처리) → P3 search(검색+OpenAI+이력·예시) → P4 rankings/onboarding → P5 프론트 연동 → Future 시맨틱 검색. **실제 현황: 백엔드 P1~P4 엔드포인트는 모두 `[구현됨]`, 프론트는 UC-1/UC-1-1만 연동, 나머지 미연동.**
+P1 기반(스캐폴딩·Compose·Flyway·전역에러·보안기반) → P2 notices(조회·LCS diff·승인 게이트·Vision 전처리) → P3 search(검색+OpenAI+이력·예시) → P4 rankings/onboarding → P5 프론트 연동 → Future 시맨틱 검색. **실제 현황: 백엔드 P1~P4 엔드포인트는 모두 `[구현됨]`, 프론트는 UC-1/UC-1-1/UC-3 연동 완료, UC-1-2·UC-4·UC-5 미연동.**
 
 ### 11.3 프론트 미연동 페이지 연동 우선순위(로드맵)
-대응 API 클라이언트는 **모두 준비**됨. 연동 대상: **UC-1-2 예시 질문**(`Search.tsx` 로컬 state→서버), **UC-3 공고·개정본 등록 마법사**(mock→`getNotice`/`preprocessNoticePdf`/`registerNoticeRevision`/`getNoticeVersionDiff`), **UC-4 질문 분석**(`getRankings`), **UC-5 온보딩**(`getOnboardingGuide`). 연동 순서·우선순위는 미확정(§12).
+대응 API 클라이언트는 **모두 준비**됨. (UC-3 공고·개정본 등록 마법사는 연동 완료 → 대상에서 제외.) 남은 연동 대상: **UC-1-2 예시 질문**(`Search.tsx` 로컬 state→서버), **UC-4 질문 분석**(`getRankings`), **UC-5 온보딩**(`getOnboardingGuide`). 연동 순서·우선순위는 미확정(§12).
 
 ---
 
@@ -498,18 +502,18 @@ P1 기반(스캐폴딩·Compose·Flyway·전역에러·보안기반) → P2 noti
 
 - **인증·권한:** 1차 `permitAll()` 골격만, 추후 ROLE_ADMIN/ROLE_MANAGER RBAC 도입 시점·권한 매트릭스 확정.
 - **문서 업로드/승인 권한자:** 누가 단일 진실 문서를 수정 가능한가(`POST .../revisions`는 추후 문서 관리자 권한 제한 예정).
-- **다중 사용자 환경의 공용 기록·공용 전체삭제 의도:** 누구나 전체 기록 삭제 가능(소유권·확인 없음). 단일 운영자 가정인지 멀티유저 의도인지 확정 필요.
+- **다중 사용자 환경의 공용 기록·공용 전체삭제 의도:** 누구나 전체 기록 삭제 가능(소유권·확인 없음). **결정: 현행 유지**(전사 공용·`window.confirm`만), 향후 계정 관리(인증/RBAC) 도입 시 권한별 접근으로 재설계.
 - **레이트리밋·PII 마스킹·OpenAI ZDR(Zero Data Retention)** 적용 시점·범위(현재 모두 미구현).
 - **상충 절차 판단 기준 및 표시 UI 상세** — 어떤 조건을 '상충'으로 판정해 병렬 표시할지.
 - **유사 질문 카테고리화 기준** — 유사도 임계값·분류 체계 안정화. 현재 부분문자열 빈도 매칭의 과대·과소 집계 가능.
 - **랭킹 `trend`·`viewCount` 의미** — 증감 추세(up/down/same)·조회수 별도 집계 구현 여부(현재 trend='same', searchCount==viewCount).
 - **랭킹 캐시(`ranking_cache`) 갱신 주기** — 온디맨드 vs 배치.
-- **전처리 입력 포맷 범위**(PDF/이미지/한글 문서)와 **표·도표 표현 포맷**(이미지 블록 vs 구조화 텍스트). 실제 preprocess는 PDFBox 텍스트 추출 + 이미지 전용 페이지 Vision OCR이며 '표·도표 인식' 독립 단계는 코드에 없음(프론트 시뮬레이션 라벨).
+- **전처리 입력 포맷 범위**(PDF/이미지/한글 문서)와 **표·도표 표현 포맷**(이미지 블록 vs 구조화 텍스트). 실제 preprocess는 PDFBox 텍스트 추출 + 이미지 전용 페이지 Vision OCR이며 '표·도표 인식' 독립 단계는 코드에 없음(전처리 결과 블록을 프론트 검토 화면이 그대로 표시).
 - **preprocess 한도 정본** — 50MB가 servlet multipart와 `app.preprocess.max-bytes` 두 곳 중복, 페이지 수 상한·8000자 컷 실제 적용 여부.
-- **참고자료(reference) 배지 의미** — PolicyNotice가 `category!=='regulation'`을 '절차' 배지로 표기 → 실제 docType과 어긋날 소지. docType↔배지 매핑 정의 필요.
+- ~~**참고자료(reference) 배지 의미**~~ — **해결됨**: `notice_category.doc_type`(V7)·`NoticeCategory.docType`으로 배지를 표시(regulation→'공고', reference→'참고자료'). 기존 `category!=='regulation'`을 '절차'로 표기하던 어긋남 제거(UC-3 핵심 규칙).
 - **ChromaDB(future)** 운영 형태·컬렉션·인덱싱·재인덱싱 전략, 한국어 전문검색 토크나이저(ngram 토큰 크기) 튜닝.
-- **OpenAPI 갱신:** `GET /api/v1/notices/assets/{id}`(sha256 64-hex)를 openapi.yaml에 추가하고 구판 'UUID 기반 재명명' 문구를 sha256 콘텐츠 주소로 정정(CLAUDE.md 3중 동기화).
-- **프론트 미연동 페이지 연동 시점·우선순위** — UC-3·UC-4·UC-5·예시질문·개정본 등록 마법사(§11.3).
+- ~~**OpenAPI 갱신(assets 라우트 추가)**~~ — **해결됨**: `GET /api/v1/notices/assets/{id}`·`POST /api/v1/notices/assets`(sha256 64-hex)가 openapi.yaml에 반영됨, 구판 'UUID 기반 재명명' 문구는 sha256 콘텐츠 주소로 정정 완료.
+- **프론트 미연동 페이지 연동 시점·우선순위** — UC-1-2 예시질문·UC-4·UC-5(§11.3). (UC-3 공고·개정본 등록 마법사는 연동 완료.)
 - **App.tsx 404 폴백 부재** — 정의되지 않은 경로 진입 시 빈 화면이 의도인지.
 - **파이프라인 미결:** 임계 보정(glyph_recovery 0.85 등 한국 규정 PDF 표본 보정), PyMuPDF 라이선스(AGPL/상용 듀얼) 및 Python 3.13 휠 가용성 P0 결정(상용 vs pypdfium2 BSD 교체), 배포 토폴로지 P0(운영 JRE-only 컨테이너에 Python+PyMuPDF+tesseract+kor 추가 방식 A/B/C), 표 인식 한계(병합셀 span·셀 내 줄바꿈·세로쓰기), embedding_text LLM 보강 채택 범위·value-check 엄격도, jsonl→upsert 워커 소유(Spring vs 별도 워커), review_required 검토자 전달 채널, 2차(stored) 인젝션 소비측 방어, DPI/성능 트레이드오프, 회전/세로쓰기 표 transform 환산 한계.
 - **테스트 베이스라인 불일치:** IMPLEMENTATION_PLAN 헤더 35 passed vs A1 완료 노트 37 passed — 정본 베이스라인 확정 필요.

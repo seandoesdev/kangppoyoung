@@ -231,6 +231,8 @@ paths:
       description: >-
         검토·승인 마법사의 최종 단계. 전처리·검토를 마친 갱신본 블록과 시행일을 받아
         단일 진실 문서의 새 최신 버전으로 누적한다. 등록 확정은 사용자 승인 후에만 이루어진다.
+        effectiveDate 는 현재 최신본 시행일 이후여야 한다(백데이트 금지). 이를 위반하면
+        400(INVALID_EFFECTIVE_DATE)을 반환한다.
       parameters:
         - $ref: '#/components/parameters/NoticeCategory'
       requestBody:
@@ -246,6 +248,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NoticeVersion'
+        '400':
+          description: 잘못된 요청 (시행일 백데이트 / 빈 blocks 등)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidEffectiveDate:
+                  summary: 현재 최신본 시행일 이전 시행일 지정
+                  value:
+                    code: INVALID_EFFECTIVE_DATE
+                    message: '시행일은 현재 최신본(2025-01-01) 이후여야 합니다. 과거 시행일로는 등록할 수 없습니다.'
 
   /notices/{category}/revisions/preprocess:
     post:
@@ -280,6 +294,80 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/ContentBlock'
+        '400':
+          description: 잘못된 파일 (PDF 아님 / 빈 파일 / 50 MB 초과)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidFileType:
+                  summary: PDF 파일이 아닌 경우
+                  value: { code: INVALID_FILE_TYPE, message: PDF 파일만 업로드할 수 있습니다. }
+                emptyFile:
+                  summary: 빈 파일
+                  value: { code: EMPTY_FILE, message: 빈 파일입니다. }
+                fileTooLarge:
+                  summary: 50 MB 초과 (app.preprocess.max-bytes=52428800)
+                  value: { code: FILE_TOO_LARGE, message: 파일이 너무 큽니다. }
+
+  /notices/assets:
+    post:
+      tags: [notices]
+      operationId: uploadNoticeAsset
+      summary: 검토 단계에서 수동 추가하는 이미지를 콘텐츠 주소 자산으로 업로드
+      description: >-
+        개정본 검토 단계에서 수동으로 추가하는 이미지를 콘텐츠 주소(sha256) 자산으로
+        저장한다. 전처리(preprocessNoticePdf) 산출 이미지와 동일 경로로 서빙되어
+        버전 간 diff 동등성 규칙을 공유한다. 응답 url 을 ContentBlock(image).src 로
+        사용한다. 기본 업로드 한도 10 MB(app.assets.max-image-bytes=10485760).
+        (UC-3 / FR-3.x)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 업로드할 이미지 파일 (이미지 Content-Type 필수, 최대 10 MB)
+            examples:
+              imageUpload:
+                summary: 이미지 업로드
+                value:
+                  file: '<binary>'
+      responses:
+        '201':
+          description: 자산 저장됨. 응답 url 을 ContentBlock(image).src 로 사용한다.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetRef'
+              examples:
+                created:
+                  summary: 업로드 성공
+                  value:
+                    id: a3f1c2d4e5b6a7f8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2
+                    url: /api/v1/notices/assets/a3f1c2d4e5b6a7f8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2
+        '400':
+          description: 잘못된 파일 (이미지 아님 / 빈 파일 / 10 MB 초과)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidFileType:
+                  summary: 이미지 파일이 아닌 경우
+                  value: { code: INVALID_FILE_TYPE, message: 이미지 파일만 업로드할 수 있습니다. }
+                emptyFile:
+                  summary: 빈 파일
+                  value: { code: EMPTY_FILE, message: 빈 파일입니다. }
+                fileTooLarge:
+                  summary: 10 MB 초과
+                  value: { code: FILE_TOO_LARGE, message: 이미지 파일이 너무 큽니다. }
 
   /notices/assets/{id}:
     get:
@@ -530,12 +618,19 @@ components:
 
     NoticeCategory:
       type: object
-      required: [key, label, docTitle, versions]
+      required: [key, label, docType, docTitle, versions]
       properties:
         key:
           type: string
           enum: [regulation, reference]
         label: { type: string, example: 공고 }
+        docType:
+          type: string
+          description: >-
+            화면 배지용 실제 문서 종류(예: 공고/참고자료/규정/지침/절차).
+            카테고리별 시드값: regulation→"공고", reference→"참고자료".
+            향후 카테고리 추가 시 값이 늘어날 수 있으므로 enum 으로 강제하지 않는다.
+          example: 공고
         docTitle: { type: string }
         versions:
           type: array
@@ -550,9 +645,11 @@ components:
         effectiveDate:
           type: string
           format: date
-          description: 시행일
+          description: 시행일. 현재 최신본 시행일 이후여야 한다(백데이트 금지).
         blocks:
           type: array
+          minItems: 1
+          description: 갱신본 블록 목록. 빈 배열은 허용하지 않는다(@NotEmpty).
           items: { $ref: '#/components/schemas/ContentBlock' }
 
     DiffBlock:
@@ -608,6 +705,27 @@ components:
         relatedArticles:
           type: array
           items: { $ref: '#/components/schemas/Article' }
+
+    AssetRef:
+      type: object
+      description: >-
+        자산 업로드 응답. id 는 sha256 콘텐츠 주소(64자 소문자 16진수),
+        url 은 `/api/v1/notices/assets/{id}` 형태의 서빙 경로다.
+        ContentBlock(image).src 값으로 직접 사용한다.
+        (backend: AssetRef record, AssetController.upload)
+      required: [id, url]
+      properties:
+        id:
+          type: string
+          pattern: '^[0-9a-f]{64}$'
+          minLength: 64
+          maxLength: 64
+          description: sha256 콘텐츠 주소 (64자 소문자 16진수)
+          example: a3f1c2d4e5b6a7f8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2
+        url:
+          type: string
+          description: 자산 서빙 경로 (/api/v1/notices/assets/{id})
+          example: /api/v1/notices/assets/a3f1c2d4e5b6a7f8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2
 
     Error:
       type: object

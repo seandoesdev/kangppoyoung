@@ -148,7 +148,7 @@ npm run preview    # 프로덕션 빌드 로컬 미리보기
 
 라우팅 페이지: 통합 검색(`/`) · 정책 자금 공고(`/notice/:category`, `regulation`=공고 / `reference`=참고자료) · 질문 분석(`/ranking`) · 온보딩 가이드(`/onboarding`).
 
-> 현재 Search 페이지만 라이브 백엔드(`searchPolicy`)에 연결되어 있고, Ranking·Onboarding·PolicyNotice는 아직 [`src/data/mock.ts`](frontend/src/data/mock.ts)의 목 데이터를 사용한다.
+> 현재 Search·PolicyNotice 페이지가 라이브 백엔드에 연결되어 있고(검색·공고 버전관리/diff·개정본 등록), Ranking·Onboarding은 아직 [`src/data/mock.ts`](frontend/src/data/mock.ts)의 목 데이터를 사용한다.
 
 ## 환경 변수
 

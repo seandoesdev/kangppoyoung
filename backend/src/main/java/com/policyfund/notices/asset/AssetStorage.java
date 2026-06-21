@@ -1,8 +1,13 @@
 package com.policyfund.notices.asset;
 
+import com.policyfund.common.error.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -31,6 +36,24 @@ public class AssetStorage {
                 Files.write(file, bytes);
             }
             return id;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * 업로드 이미지를 PNG 로 정규화해 콘텐츠 주소(sha256)로 저장한다. 동일 이미지 → 동일 id 라
+     * 전처리 산출 이미지와 같은 diff 동등성 규칙을 따른다. 해석 불가하면 INVALID_FILE_TYPE.
+     */
+    public String storeImage(byte[] raw) {
+        try {
+            BufferedImage image = ImageIO.read(new ByteArrayInputStream(raw));
+            if (image == null) {
+                throw new BadRequestException("INVALID_FILE_TYPE", "이미지 파일만 업로드할 수 있습니다.");
+            }
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            ImageIO.write(image, "png", out);
+            return store(out.toByteArray());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

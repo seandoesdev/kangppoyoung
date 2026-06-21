@@ -26,7 +26,7 @@ CREATE TABLE search_history (
     INDEX idx_search_history_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- search_example: 슬롯(0~4) 유니크로 최대 5개 동시성 안전 보장 (PRD §10 C-3)
+-- search_example: 슬롯(0~4) 유니크로 최대 5개 동시성 안전 보장 (BACKEND_PRD 발견 #4)
 CREATE TABLE search_example (
     id         BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
     slot       TINYINT      NOT NULL,

@@ -1,13 +1,16 @@
 import type { ReactNode } from 'react'
-import type { Article, DocType } from '../data/mock'
+import type { Article } from '../data/mock'
+import type { NoticeDocType } from '../api/types'
 
-const typeColor: Record<DocType, string> = {
+const typeColor: Record<NoticeDocType, string> = {
   규정: 'bg-indigo-100 text-indigo-700',
   지침: 'bg-emerald-100 text-emerald-700',
   절차: 'bg-amber-100 text-amber-700',
+  공고: 'bg-sky-100 text-sky-700',
+  참고자료: 'bg-fuchsia-100 text-fuchsia-700',
 }
 
-export function TypeBadge({ type }: { type: DocType }) {
+export function TypeBadge({ type }: { type: NoticeDocType }) {
   return (
     <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${typeColor[type]}`}>
       {type}
@@ -37,8 +40,8 @@ const CONTENT_TYPE_LABEL: Record<string, string> = {
  * 그 외(PDF 등 알 수 없는 값)는 아무것도 표시하지 않는다 — 영문 속성값이 그대로 노출되지 않도록.
  */
 function KindTag({ docType }: { docType: string }) {
-  if (docType === '규정' || docType === '지침' || docType === '절차') {
-    return <TypeBadge type={docType} />
+  if (docType in typeColor) {
+    return <TypeBadge type={docType as NoticeDocType} />
   }
   const label = CONTENT_TYPE_LABEL[docType]
   if (!label) return null

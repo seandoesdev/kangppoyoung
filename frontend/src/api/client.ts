@@ -6,6 +6,19 @@ import type { ApiErrorBody } from './types'
 // OpenAPI servers[0].url 과 동일. 배포 환경에 따라 VITE_API_BASE_URL 로 덮어쓴다.
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1'
 
+/**
+ * 서버가 blocks 에 저장한 자산 경로(/api/v1/notices/assets/{id})를 현재 API 베이스로 해석한다.
+ * 동일 오리진(기본 nginx) 배포에서는 그대로 두고, VITE_API_BASE_URL 로 API 오리진을 분리한
+ * 배포에서는 <img> 도 그 오리진을 가리키도록 접두를 교체한다. data: URL 등 그 외 src 는 그대로 둔다.
+ */
+export function assetSrc(src: string): string {
+  const DEFAULT_BASE = '/api/v1'
+  if (BASE_URL !== DEFAULT_BASE && src.startsWith(DEFAULT_BASE)) {
+    return BASE_URL + src.slice(DEFAULT_BASE.length)
+  }
+  return src
+}
+
 /** 서버가 4xx/5xx 를 반환했을 때 던지는 에러. 가능하면 본문의 code/message 를 담는다. */
 export class ApiError extends Error {
   readonly status: number

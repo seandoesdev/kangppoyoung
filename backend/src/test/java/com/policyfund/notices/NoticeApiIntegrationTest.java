@@ -23,6 +23,7 @@ class NoticeApiIntegrationTest extends AbstractIntegrationTest {
            .andExpect(status().isOk())
            .andExpect(jsonPath("$.key").value("regulation"))
            .andExpect(jsonPath("$.label").value("공고"))
+           .andExpect(jsonPath("$.docType").value("공고"))
            .andExpect(jsonPath("$.versions").isArray());
     }
 
@@ -61,6 +62,21 @@ class NoticeApiIntegrationTest extends AbstractIntegrationTest {
         mvc.perform(get("/api/v1/notices/reference"))
            .andExpect(status().isOk())
            .andExpect(jsonPath("$.versions[0].version").value("v2"));
+    }
+
+    @Test
+    void registerRevision_backdatedEffectiveDate_returns400() throws Exception {
+        // 최신본보다 이른 시행일로는 등록할 수 없다(개정본은 항상 새 최신본).
+        mvc.perform(post("/api/v1/notices/datetest/revisions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"effectiveDate\":\"2026-05-01\",\"blocks\":[{\"type\":\"text\",\"text\":\"최신본\"}]}"))
+           .andExpect(status().isCreated());
+
+        mvc.perform(post("/api/v1/notices/datetest/revisions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"effectiveDate\":\"2026-04-01\",\"blocks\":[{\"type\":\"text\",\"text\":\"과거 시행일\"}]}"))
+           .andExpect(status().isBadRequest())
+           .andExpect(jsonPath("$.code").value("INVALID_EFFECTIVE_DATE"));
     }
 
     @Test

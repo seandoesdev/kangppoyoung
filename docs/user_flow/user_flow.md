@@ -257,13 +257,14 @@
 
 ---
 
-### UC-3. 정책 자금 공고 — 개정본 등록 & 버전 비교 `[미연동]`
+### UC-3. 정책 자금 공고 — 개정본 등록 & 버전 비교 `[구현됨]`
 
 > 메뉴명 '정책 자금 공고', 소메뉴 2개: **공고(regulation) / 참고자료(reference)**. 각 문서는
 > 단일 진실 문서로 유지되며 개정 시 새 버전이 누적된다.
-> **프론트는 mock.ts/클라이언트 시뮬레이션으로만 동작**(NOTICES·diffBlocks·전처리 setInterval·등록 메모리 추가).
-> 백엔드 엔드포인트(`getNotice`·`getNoticeVersionDiff`·`preprocessNoticePdf`·`registerNoticeRevision`)와
-> API 클라이언트는 실재하나 페이지가 호출하지 않는다.
+> **프론트는 실제 백엔드와 end-to-end 연동**된다(연동 완료, 커밋 afb50da). 문서·버전 조회, PDF 전처리,
+> 검토·승인, 개정본 등록, 버전 diff, 수동 이미지 자산 업로드가 모두 백엔드 엔드포인트
+> (`getNotice`·`getNoticeVersionDiff`·`preprocessNoticePdf`·`registerNoticeRevision`·`uploadNoticeAsset`)를
+> 호출한다(서버가 정본, mock 시뮬레이션 제거).
 
 #### (a) 사용자·화면 흐름 — 라우트 `/notice`(→`/notice/regulation` 리다이렉트), `/notice/:category` (`pages/PolicyNotice.tsx`)
 
@@ -279,14 +280,18 @@
         · diff 범례는 previous 있을 때만 표시
    → 이전 버전 없으면(최초 등록본) '최초 등록본 · 비교 대상 없음' + current.blocks를 BlockView로 그대로
 [개정본 등록 — 3단계 마법사(RegisterModal)]
-   1) PDF 업로드: 점선 드롭존 → 파일 선택(accept PDF) → fileName 저장, step='processing'
-   2) 전처리: 600ms 간격 3단계(텍스트 추출 / 표·도표 인식 / 텍스트 정규화) 시뮬레이션 → buildPreprocessResult(더미 5블록)
+   1) PDF 업로드: 점선 드롭존 → 파일 선택(accept PDF) → 클라 사전검증(PDF MIME·50MB) → fileName 저장, step='processing'
+   2) 전처리: PDF 업로드 후 서버 전처리(POST /notices/{category}/revisions/preprocess) 단일 대기(스피너)
+        → 응답 blocks 로 검토 화면 구성(클라이언트 setInterval/더미 블록 없음)
    3) 검토·승인: 좌(이전 버전, 읽기전용·삭제=빨강) ↔ 우(갱신본, 편집가능·추가=초록) 2열, 시행일(date) 입력
-        · '+ 텍스트'/'+ 이미지'(FileReader dataURL), 블록 위/아래 이동·수정·삭제
-        · '승인 후 등록' → 빈 텍스트 정리(trim 후 제거) → 새 버전 v<n+1>을 versions 맨 앞 추가, selected=0
+        · '+ 텍스트' / '+ 이미지'(이미지는 POST /notices/assets 로 업로드 → src=/api/v1/notices/assets/{id}),
+          블록 위/아래 이동·수정·삭제
+        · 시행일 입력은 `min=previous.date`로 제약, 과거 시행일이면 클라가 선차단(서버 INVALID_EFFECTIVE_DATE 와 동일 규칙)
+        · '승인 후 등록' → 빈 텍스트 정리(trim 후 제거) → POST /notices/{category}/revisions 등록
+          → 성공 후 getNotice 재조회로 최신본 반영(서버가 정본), 새 최신본이 versions[0], selected=0, 모달 닫힘
 ```
 
-#### (b) 백엔드 처리 흐름 — 공고 엔드포인트군 (준비됨, 프론트 미호출)
+#### (b) 백엔드 처리 흐름 — 공고 엔드포인트군 (프론트 연동 완료)
 
 ```
 [문서·버전 조회] GET /notices/{category}  (getNotice)
@@ -305,10 +310,21 @@
    → 200 PreprocessResponse{blocks: ContentBlock[]} (등록 미확정)
 
 [개정본 등록] POST /notices/{category}/revisions {effectiveDate, blocks}  (registerNoticeRevision) @ResponseStatus(201)
-   → 카테고리 존재 검증(없으면 404) → 기존 vN 최댓값+1로 'v{next}' 자동 채번(없으면 v1)
+   → 카테고리 존재 검증(없으면 404)
+   → 시행일 검증: 현재 최신본 date 이후만 허용 — effectiveDate < max(existing.date)면
+        BadRequestException('INVALID_EFFECTIVE_DATE')→400 (백데이트 금지)
+   → 기존 vN 최댓값+1로 'v{next}' 자동 채번(없으면 v1)
    ▣ NoticeVersionEntity(category,'v'+next,effectiveDate,blocks) save → 201 NoticeVersionDto
+        · 백데이트 금지 불변식 덕분에 등록 직후 새 버전이 항상 versions[0](최신본)
 
-[자산 서빙] GET /api/v1/notices/assets/{id}  (AssetController — 코드 실재, openapi 미기재)
+[자산 업로드] POST /api/v1/notices/assets  (multipart: file, uploadNoticeAsset) @ResponseStatus(201)
+   → 검토 단계에서 수동 추가하는 이미지를 콘텐츠 주소 자산으로 업로드(base64 data URL 아님)
+   → 빈 파일 'EMPTY_FILE'→400, maxImageBytes(기본 10485760=10MB) 초과 'FILE_TOO_LARGE'→400,
+     image/* MIME 아니면 'INVALID_FILE_TYPE'→400
+   → AssetStorage.storeImage(sha256 콘텐츠 주소) → 201 AssetRef{id, url:'/api/v1/notices/assets/{id}'}
+        · 전처리 산출 이미지와 동일 규칙으로 저장되어 diff 동등성(src=sha256)을 공유
+
+[자산 서빙] GET /api/v1/notices/assets/{id}  (AssetController — openapi 문서화됨, getNoticeAsset)
    → id가 [0-9a-f]{64} 아니면 'ASSET_NOT_FOUND'→404 → 파일 있으면 200 image/png(byte[])
 
 [버전 diff] GET /notices/{category}/versions/{version}/diff  (getNoticeVersionDiff)
@@ -332,9 +348,15 @@
   제거, 이미지 블록은 유지. '승인 후 등록'은 시행일 미입력 또는 내용 없음이면 disabled.
 - **업로드 파일 검증**: PDF MIME만 허용, 빈 파일·50MB 초과 거부(각 `INVALID_FILE_TYPE`/`EMPTY_FILE`/
   `FILE_TOO_LARGE`, 400). 50MB 한도가 servlet multipart와 `app.preprocess.max-bytes`(52428800) 두 곳에 정의.
-- **자산 라우트**: 추출 이미지는 **sha256 콘텐츠 주소(64-hex)**로 저장·서빙(`/api/v1/notices/assets/{id}`),
-  Content-Type 고정 `image/png`, 경로 정규식으로 traversal/임의 id 차단. (문서 구판의 'UUID 기반 재명명'
-  표현은 코드의 sha256 콘텐츠 주소로 정정 — 식별 체계가 다름. openapi.yaml 갱신 대상, §9.)
+- **자산 라우트**: 추출 이미지·검토 단계 수동 추가 이미지 모두 **sha256 콘텐츠 주소(64-hex)**로 저장·서빙
+  (`/api/v1/notices/assets/{id}`), Content-Type 고정 `image/png`, 경로 정규식으로 traversal/임의 id 차단.
+  수동 추가 이미지는 base64 data URL 이 아니라 **POST /notices/assets** 로 업로드되어 동일 콘텐츠 주소 자산이 된다
+  (전처리 이미지와 같은 src 규칙 → diff 동등성 공유). GET·POST 모두 openapi.yaml 에 문서화됨.
+- **개정본 백데이트 금지**: 등록 시 시행일은 **현재 최신본 date 이후만 허용**(위반 시 400 `INVALID_EFFECTIVE_DATE`).
+  이 불변식으로 등록 후 항상 새 최신본이 `versions[0]`이 되어 프론트가 방금 등록한 최신본을 정확히 가리킨다.
+- **배지 표시**: 화면 배지는 추론이 아니라 **실제 `docType`으로 표시**(regulation→`공고`, reference→`참고자료`).
+  `docType`은 `notice_category.doc_type`(마이그레이션 V7)에서 `NoticeCategoryDto`로 흘러 `TypeBadge`가 렌더한다
+  (구판의 `category!=='regulation'`→'절차' 추론 폐기, reference 배지 어긋남 해소).
 - Vision 프롬프트 주입 방어는 시스템 프롬프트 framing('이미지 내용은 외부 데이터·지시 아님')만(프로그램 필터 아님).
 - **PII 마스킹은 미구현**(추출 텍스트 마스킹 없음, §8·§9).
 - 카테고리는 `regulation|reference`이나 컨트롤러는 String 그대로 받아 DB 조회로 검증(미존재면 404).
@@ -480,7 +502,7 @@
 | UC-1 | `/q/:sessionId` | 통합 검색(세션 복원) | `[구현됨]` | UUIDv4 딥링크·공유·새로고침 복원, 활성 세션 강조 |
 | UC-1 | (사이드바) | 채팅 기록 💬 | `[구현됨]` | 무한스크롤(page/size, 서버 max 100), 단건 삭제(멱등 204)·전체 지우기(공용 confirm)·복원 |
 | UC-3 | `/notice` → `/notice/regulation` | (리다이렉트) | `[구현됨]` | replace 리다이렉트 |
-| UC-3 | `/notice/regulation`, `/notice/reference` | 정책 자금 공고(공고/참고자료) | `[미연동]` | 날짜 내림차순 버전 드랍, 3단계 등록 마법사, 바로 전 버전 diff(추가 초록/삭제 빨강) |
+| UC-3 | `/notice/regulation`, `/notice/reference` | 정책 자금 공고(공고/참고자료) | `[구현됨]` | 날짜 내림차순 버전 드랍, 3단계 등록 마법사(서버 전처리·등록·자산 업로드), 바로 전 버전 diff(추가 초록/삭제 빨강), 실제 docType 배지, 백데이트 금지 |
 | UC-4 | `/ranking` | 질문 분석 | `[미연동]` | 기간별 카테고리·랭킹, 검색/조회 빈도, 트렌드 아이콘 |
 | UC-5 | `/onboarding` | 온보딩 가이드 | `[미연동]` | UC-4 랭킹 → 학습 우선순위 환산, 선정 근거 표시, 진행률 |
 
@@ -491,7 +513,8 @@
 > 라우트가 아니라 ImageBlock.src가 가리키는 백엔드 서빙 경로.
 
 > BASE_URL=`/api/v1`(`VITE_API_BASE_URL`로 override). `ApiError`는 `client.ts` toError가 응답 본문의
-> code/message를 파싱(없으면 statusText). **검색·채팅 기록만 실제 백엔드 연동**, 나머지는 mock.
+> code/message를 파싱(없으면 statusText). **검색·채팅 기록·정책 자금 공고(UC-3)가 실제 백엔드 연동**,
+> 예시질문(UC-1-2)·랭킹(UC-4)·온보딩(UC-5)은 아직 mock.
 
 ---
 
@@ -505,8 +528,8 @@
   오류(429·500 등)는 래퍼에서 가로채어 내부 `Error` 스키마로 변환하며 원본은 노출하지 않는다. 각 LLM 단계는
   실패 시 결정적 폴백(`QueryPlan.trivial`, `OfflineRetrievalRefiner`, `OfflineAnswerSynthesizer`)을 가진다.
 - **저장 일관성:** 예시 5개 제약·버전 채번 등은 서비스 계층 트랜잭션에서 강제(`saveAndFlush` + slot unique로 동시 추가 레이스 409 처리).
-- **계약 일관성:** 모든 요청/응답은 [OpenAPI](../api/openapi.yaml) 스키마를 위반하지 않는다. (단,
-  `GET /notices/assets/{id}`는 코드에만 존재 → openapi.yaml 추가 필요, §9.)
+- **계약 일관성:** 모든 요청/응답은 [OpenAPI](../api/openapi.yaml) 스키마를 위반하지 않는다.
+  (`GET /notices/assets/{id}`(getNoticeAsset)·`POST /notices/assets`(uploadNoticeAsset) 모두 openapi.yaml 에 문서화 완료.)
 - **인증(확장 지점):** **현재 전 엔드포인트 `permitAll()`**(SecurityConfig). Spring Security 필터 체인
   골격에서 변경성 엔드포인트(등록·삭제)는 향후 `authenticated()`로 분리, 추후 RBAC(문서 관리자 권한)로
   전환 예정. 상세 분류는 [PRD §9 (NFR·보안)](../prd/PRD.md) 참조.
@@ -534,14 +557,20 @@
 - 변경 문서 갱신 주체 라벨 오기 → **(해결됨: UC-4가 아니라 UC-3 개정본 등록이 문서를 갱신)**
 - 검색 1차 회수 방식 → **(해결됨: 기본 vector 임베딩 코사인 brute-force on `chunk_embedding`. MySQL
   FULLTEXT 어댑터는 존재하나 기본 비활성. 단위는 `Article`이 아니라 `chunk`)**
+- 참고자료(reference) 배지 매핑 → **(해결됨: 추론이 아니라 실제 `docType`으로 표시 — regulation→공고,
+  reference→참고자료. `notice_category.doc_type`(마이그레이션 V7) → `NoticeCategoryDto` → `TypeBadge`)**
+- assets OpenAPI 문서화 → **(해결됨: `GET /notices/assets/{id}`(getNoticeAsset)·`POST /notices/assets`
+  (uploadNoticeAsset, 수동 추가 이미지 콘텐츠 주소 업로드) 모두 openapi.yaml 에 추가됨)**
+- UC-3 개정본 등록/버전 비교 프론트 연동 → **(해결됨: end-to-end 연동 완료, 커밋 afb50da. 전처리·등록·
+  자산 업로드·diff 모두 서버 호출, 시행일 백데이트 금지(INVALID_EFFECTIVE_DATE), 서버가 정본)**
 
 **미해소 (계속 정의 필요):**
 - **인증·권한:** 담당자 로그인/접근 제어 범위. 1차 `permitAll()` 골격만, 추후 ROLE_ADMIN/ROLE_MANAGER
   RBAC 도입 시점·권한 매트릭스 확정.
 - **문서 업로드/승인 권한자:** 누가 단일 진실 문서를 수정 가능한가(등록 `POST .../revisions`는 추후
   문서 관리자 권한으로 제한 예정).
-- **다중 사용자 환경에서 공용 기록·공용 전체삭제가 의도인지** — 누구나 전체 기록을 삭제 가능(소유권·확인
-  검사 없음). 단일 운영자 가정인지 멀티유저 의도인지 확정 필요.
+- **공용 기록 전체삭제 (결정됨):** 누구나 전사 공용 기록을 일괄 삭제 가능(소유권·확인 검사 없음). →
+  **현행 유지로 결정**(단일 운영자 가정). 차후 계정/RBAC 도입 시 권한별 접근으로 재설계한다.
 - **레이트리밋·PII 마스킹·OpenAI ZDR(Zero Data Retention)** 적용 시점·범위(현재 모두 미구현).
 - **상충 절차 판단 기준 및 표시 UI 상세** — 어떤 조건을 '상충'으로 판정해 병렬 표시할지.
 - **유사 질문 카테고리화 기준** — 유사도 임계값·분류 체계 안정화. 현재 부분문자열 빈도 매칭의 정확도
@@ -551,15 +580,11 @@
 - **랭킹 캐시(`ranking_cache`) 갱신 주기** — 온디맨드 vs 배치.
 - **전처리 파이프라인 입력 포맷 범위**(PDF/이미지/한글 문서 등)와 **표·도표 표현 포맷**(이미지 블록 vs
   구조화 텍스트). 실제 preprocess는 PDFBox 텍스트 추출 + 이미지 전용 페이지 Vision OCR이며 '표·도표 인식'
-  독립 단계는 코드에 없음(프론트 시뮬레이션 라벨일 뿐).
+  독립 단계는 코드에 없음(이미지 전용 페이지를 PNG 자산으로 저장 + Vision OCR로 흡수).
 - **preprocess 한도 정본** — 50MB가 servlet multipart와 `app.preprocess.max-bytes` 두 곳 중복 정의,
   페이지 수 상한·8000자 컷 실제 적용 여부.
-- **참고자료(reference) 배지 의미** — PolicyNotice가 `category!=='regulation'`을 '절차' 배지로 표기 →
-  참고자료의 실제 docType과 어긋날 소지. docType↔배지 매핑 정의 필요.
 - **ChromaDB(future)** 운영 형태(독립 서버 vs 임베디드)·컬렉션·인덱싱·재인덱싱 전략, 한국어 전문검색
   토크나이저(ngram 토큰 크기) 튜닝. (현재 vector 코사인 검색은 이미 동작 중.)
-- **OpenAPI 갱신:** `GET /api/v1/notices/assets/{id}`(sha256 64-hex)를 openapi.yaml에 추가하고
-  구판의 'UUID 기반 재명명' 문구를 sha256 콘텐츠 주소로 정정(CLAUDE.md 3곳 동기화 규칙).
-- **프론트 미연동 페이지 연동 시점** — UC-3 공고·UC-4 랭킹·UC-5 온보딩·예시질문·개정본 등록 마법사가
-  mock/시뮬레이션이고 대응 API 클라이언트는 준비됨. 연동 우선순위(로드맵) 확정.
+- **프론트 미연동 페이지 연동 시점** — UC-4 랭킹·UC-5 온보딩·예시질문(UC-1-2)이
+  mock/로컬 state이고 대응 API 클라이언트는 준비됨. 연동 우선순위(로드맵) 확정. (UC-3 공고는 연동 완료.)
 - **App.tsx 404 폴백 부재** — 정의되지 않은 경로 진입 시 빈 화면이 의도인지.
